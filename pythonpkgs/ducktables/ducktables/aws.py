@@ -1,26 +1,27 @@
 
 import boto3
+from ducktables import ducktable
 
-
+_ec2_instances_schema = {
+    'instance_id': str,
+    'name': str,
+    'instance_type': str,
+    'state': str,
+    'key_pair': str,
+    'platform': str,
+    'architecture': str,
+    'vpc_id': str,
+    'subnet_id': str,
+    'public_dns': str,
+    'public_ip': str,
+    'private_dns': str,
+    'private_ip': str,
+    }
+@ducktable(**_ec2_instances_schema)
 def ec2_instances():
     """
     SQL Usage:
-    SELECT * FROM pytable('aws:ec2_instances',
-      columns = {
-        'instance_id': 'VARCHAR',
-        'name': 'VARCHAR',
-        'instance_type': 'VARCHAR',
-        'state': 'VARCHAR',
-        'key_pair': 'VARCHAR',
-        'platform': 'VARCHAR',
-        'architecture': 'VARCHAR',
-        'vpc_id': 'VARCHAR',
-        'subnet_id': 'VARCHAR',
-        'public_dns': 'VARCHAR',
-        'public_ip': 'VARCHAR',
-        'private_dns': 'VARCHAR',
-        'private_ip': 'VARCHAR'
-        });
+    SELECT * FROM pytable('aws:ec2_instances'));
     """
     def response_to_rows(response):
         for resv in response['Reservations']:
@@ -59,30 +60,26 @@ def ec2_instances():
         token = response.get('NextToken')
         
         
-
+@ducktable(name = str, creation_date = str)
 def s3_buckets():
     """
     SQL Usage:
-    SELECT * FROM pytable('aws:s3_buckets', columns={'name': 'VARCHAR', 'creation_date': 'VARCHAR'});
+    SELECT * FROM pytable('aws:s3_buckets');
     """
     client = boto3.client('s3')
     response = client.list_buckets()
     for bucket in response['Buckets']:
         yield (bucket['Name'], bucket['CreationDate'].strftime('%m/%d/%Y'))
     
-
+@ducktable(key = str, last_modified = str, size = int, storage_class = str)
 def s3_objects(bucket, prefix = None):
     """
     SQL Usage:
-    SELECT * FROM pytable('aws:s3_objects', 'bucket-name', 'foo/bar/prefix',
-      columns = { 'key': 'VARCHAR', 'last_modified': 'VARCHAR', 'size': 'INT', 'storage_class': 'VARCHAR'}
-    );
+    SELECT * FROM pytable('aws:s3_objects', 'bucket-name', 'foo/bar/prefix');
 
     Note that the final prefix argument is optional, and you don't need to specify it in
     your SQL query. To list all objects:
-    SELECT * FROM python_table('aws', 's3_objects',
-      { 'key': 'VARCHAR', 'last_modified': 'VARCHAR', 'size': 'INT', 'storage_class': 'VARCHAR'},
-      ['bucket-name']);
+    SELECT * FROM pytable('aws:s3_objects', 'bucket-name');
     """
     def to_row(obj):
         return (obj['Key'],

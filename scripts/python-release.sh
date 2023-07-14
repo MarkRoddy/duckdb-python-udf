@@ -10,9 +10,9 @@ which python3.8
 
 # Create a virtual environment
 echo "Creating our virtual environment"
-python3.8 -m venv myenv
+python3.8 -m venv env-py3.8
 echo "Sourcing the env"
-source myenv/bin/activate
+source env-py3.8/bin/activate
 
 cd ducktables;
 

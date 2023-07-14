@@ -15,7 +15,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 include_directories(src/include ${Python_INCLUDE_DIRS})
 
-FILE(GLOB EXTENSION_SOURCES src/*.cpp)
+FILE(GLOB_RECURSE EXTENSION_SOURCES src/*.cpp)
 
 # Define Py_LIMITED_API for all source files, pins us to Python 3.4.
 add_definitions(-DPy_LIMITED_API=0x03040000)

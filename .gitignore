@@ -8,7 +8,7 @@ test/python/__pycache__/
 .Rhistory
 stuff/*
 duckdb-*
-pythonpkgs/myenv/
+pythonpkgs/env-py*/
 pythonpkgs/ducktables/dist/
 pythonpkgs/ducktables/ducktables.egg-info/
 test/extension-integration/pytables.duckdb_extension

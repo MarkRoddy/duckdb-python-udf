@@ -1,0 +1,32 @@
+# name: test/ducktables-integration/aws.test
+# description: Test AWS Functions
+# group: [ducktables-integration]
+
+# Require statement will ensure this test is run with this extension loaded
+require pytables
+
+# Query EC2 Instances
+query I
+SELECT name
+FROM pytable('ducktables.aws:ec2_instances')
+----
+mroddy-personal-development
+
+
+# Query S3 Buckets
+query I
+SELECT name
+FROM pytable('ducktables.aws:s3_buckets')
+WHERE name like 'net.ednit.duckdb-%';
+----
+net.ednit.duckdb-extensions
+
+# Query Objects in S3 Bucket
+query I
+SELECT key
+FROM pytable('ducktables.aws:s3_objects', 'net.ednit.duckdb-extensions', 'pytables/latest/python3.9/')
+----
+pytables/latest/python3.9/v0.8.0/linux_amd64/pytables.duckdb_extension.gz
+
+
+

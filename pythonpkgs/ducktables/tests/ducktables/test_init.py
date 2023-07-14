@@ -94,3 +94,67 @@ class TestDuckTableSchemaWrapper(TestCase):
         actual_columns = some_types.column_types()
         expected_columns = None
         self.assertEqual(expected_columns, actual_columns)
+
+    def test_explicit_names_with_annotation(self):
+        @ducktable('index', 'charval')
+        def some_types(input) -> Iterator[Tuple[int, str]]:
+            return index_chars(input)
+
+        actual_types = some_types.column_types()
+        expected_types = [int, str]
+        self.assertEqual(expected_types, actual_types)
+
+        actual_names = some_types.column_names()
+        expected_names = ('index', 'charval')
+        self.assertEqual(expected_names, actual_names)
+
+        rows = list(some_types('foo'))
+        expected_rows = [
+            (0, 'f'),
+            (1, 'o'),
+            (2, 'o'),
+            ]
+        self.assertEqual(rows, expected_rows)
+
+    def test_explicit_names_and_types(self):
+        @ducktable(index = int, charval = str)
+        def some_types(input):
+            return index_chars(input)
+
+        actual_types = some_types.column_types()
+        expected_types = (int, str)
+        self.assertEqual(expected_types, actual_types)
+
+        actual_names = some_types.column_names()
+        expected_names = ('index', 'charval')
+        self.assertEqual(expected_names, actual_names)
+
+        rows = list(some_types('foo'))
+        expected_rows = [
+            (0, 'f'),
+            (1, 'o'),
+            (2, 'o'),
+            ]
+        self.assertEqual(rows, expected_rows)
+
+    def test_explicit_names_and_types_overrides_type_annotation(self):
+        """If the user supplies type as decorator args, we ignore the annotation"""
+        @ducktable(index = int, charval = str)
+        def some_types(input) -> Iterator[Tuple[str, str, int, str]]:
+            return index_chars(input)
+
+        actual_types = some_types.column_types()
+        expected_types = (int, str)
+        self.assertEqual(expected_types, actual_types)
+
+        actual_names = some_types.column_names()
+        expected_names = ('index', 'charval')
+        self.assertEqual(expected_names, actual_names)
+
+        rows = list(some_types('foo'))
+        expected_rows = [
+            (0, 'f'),
+            (1, 'o'),
+            (2, 'o'),
+            ]
+        self.assertEqual(rows, expected_rows)

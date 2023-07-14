@@ -46,9 +46,20 @@ PyObject *PythonTableFunction::wrap_function(PyObject *function) {
 		return nullptr;
 	}
 
-	// TODO TODO TODO
-	// check if the function is already wrapped using isinstance(), return it if so
-	// TODO TODO TODO
+	auto decorator_cls = import_decorator_class();
+	if (!decorator_cls) {
+		debug("We didn't get a decorator class even though we have a decoartor? Weird. Skipping check");
+	} else {
+		auto is_decorator = PyIsInstance(function, decorator_cls);
+		if (is_decorator) {
+			debug("Our function is already wrapped. Nothing to do here.");
+			Py_DECREF(decorator);
+			Py_DECREF(decorator_cls);
+			return function;
+		} else {
+			debug("our function is not wrapped, applying the decorator");
+		}
+	}
 
 	// Otherwise, go ahead and wrappe it
 	debug("Creating a tuple for arguments");
@@ -96,7 +107,7 @@ PyObject *PythonTableFunction::wrap_function(PyObject *function) {
 	return wrapped_function;
 }
 
-PyObject *PythonTableFunction::import_decorator() {
+PyObject *PythonTableFunction::import_from_ducktables(std::string attr_name) {
 	debug("Calling import module");
 	PyObject *module_obj = PyImport_ImportModule("ducktables");
 	debug("Completed calling import module");
@@ -107,96 +118,106 @@ PyObject *PythonTableFunction::import_decorator() {
 		return nullptr;
 	}
 	debug("Getting the attribute...");
-	PyObject *function_obj = PyObject_GetAttrString(module_obj, "ducktable");
-	if (!function_obj) {
+	PyObject *attr = PyObject_GetAttrString(module_obj, attr_name.c_str());
+	if (!attr) {
 		// todo: Maybe we want to report this error if it isn't just import error?
 		debug("Attribute not found returning null");
 		PyErr_Print();
-		return nullptr;
 	}
-	debug("Got the function, now returning");
+	Py_DECREF(module_obj);
+	return attr;
+}
+PyObject *PythonTableFunction::import_decorator() {
+	auto function_obj = import_from_ducktables("ducktable");
 	return function_obj;
 }
 
-std::vector<PyObject *> PythonTableFunction::pycolumn_types(PyObject *args, PyObject *kwargs) {
-	std::vector<PyObject *> columnTypes;
+PyObject *PythonTableFunction::import_decorator_class() {
+	auto cls_obj = import_from_ducktables("DuckTableSchemaWrapper");
+	return cls_obj;
+}
+
+// Given an attribute on our Python Function object, call it with the supplied arguments and coerce an expected
+// list-like object
+std::vector<PyObject *> PythonTableFunction::call_to_list(std::string attr_name, PyObject *args, PyObject *kwargs) {
+	std::vector<PyObject *> items;
 
 	// Get the 'column_types' method
-	PyObject *columnTypesMethod = PyObject_GetAttrString(function, "column_types");
+	PyObject *method = PyObject_GetAttrString(function, attr_name.c_str());
 
-	// Check if the 'column_types' method exists
-	if (columnTypesMethod && PyCallable_Check(columnTypesMethod)) {
-		// Invoke the 'column_types' method with args and kwargs
-		PyObject *result = PyObject_Call(columnTypesMethod, args, kwargs);
-
-		// Check if the return value is a list
-		if (result && PyList_Check(result)) {
-			Py_ssize_t listSize = PyList_Size(result);
-
-			// Iterate over the list elements
-			for (Py_ssize_t i = 0; i < listSize; ++i) {
-				PyObject *listItem = PyList_GetItem(result, i);
-
-				// Add the list item to the columnTypes vector
-				Py_INCREF(listItem);
-				columnTypes.push_back(listItem);
-			}
-		}
-
-		// Release the reference to the result
-		Py_XDECREF(result);
+	if (!method) {
+		debug("No '" + attr_name + "' attribute on our method object");
+		return items;
 	}
 
-	// Release the reference to the 'column_types' method
-	Py_XDECREF(columnTypesMethod);
+	if (!PyCallable_Check(method)) {
+		debug("Our method has a '" + attr_name + "' attribute, but it is not callabe");
+		Py_DECREF(method);
+		return items;
+	}
 
-	return columnTypes;
+	// Invoke the method with args and kwargs
+	PyObject *result = PyObject_Call(method, args, kwargs);
+	if (!result) {
+		debug("The function's " + attr_name + " method returned null. Did an error occur?");
+		Py_DECREF(method);
+		return items;
+	}
+
+	// Try to convert our result into a list. This way users can return a tuple or list or iterable or whatever.
+	PyObject *listResult = PySequence_List(result);
+	if (!listResult) {
+		debug("Unable to convert " + attr_name + "() return to a list. Maybe an error?");
+		Py_DECREF(result);
+		Py_DECREF(method);
+		return items;
+	}
+
+	// Copy the objects to our return vector
+	Py_ssize_t listSize = PyList_Size(listResult);
+
+	// Iterate over the list elements
+	for (Py_ssize_t i = 0; i < listSize; ++i) {
+		PyObject *listItem = PyList_GetItem(listResult, i);
+
+		// Add the list item to the vector
+		Py_INCREF(listItem);
+		items.push_back(listItem);
+	}
+
+	Py_DECREF(result);
+	Py_DECREF(listResult);
+	Py_DECREF(method);
+	return items;
+}
+
+std::vector<PyObject *> PythonTableFunction::pycolumn_types(PyObject *args, PyObject *kwargs) {
+	return call_to_list("column_types", args, kwargs);
 }
 
 std::vector<duckdb::LogicalType> PythonTableFunction::column_types(PyObject *args, PyObject *kwargs) {
 	auto python_types = pycolumn_types(args, kwargs);
 	// todo: check for a Python error?
+	// todo: decrement references to types
 	auto ddb_types = PyTypesToLogicalTypes(python_types);
 	return ddb_types;
 }
 
 std::vector<std::string> PythonTableFunction::column_names(PyObject *args, PyObject *kwargs) {
+	std::vector<PyObject *> pyColumnNames = call_to_list("column_names", args, kwargs);
 	std::vector<std::string> columnNames;
 
-	// Get the 'column_names' method
-	PyObject *columnNamesMethod = PyObject_GetAttrString(function, "column_names");
-
-	// Check if the 'column_names' method exists
-	if (columnNamesMethod && PyCallable_Check(columnNamesMethod)) {
-		// Invoke the 'column_names' method with args and kwargs
-		PyObject *result = PyObject_Call(columnNamesMethod, args, kwargs);
-
-		// Check if the return value is a list
-		if (result && PyList_Check(result)) {
-			Py_ssize_t listSize = PyList_Size(result);
-			debug("Number of column names returned by Python:  " + std::to_string(listSize));
-			// Iterate over the list elements
-			for (Py_ssize_t i = 0; i < listSize; ++i) {
-				PyObject *listItem = PyList_GetItem(result, i);
-
-				// Convert the list item to a C++ string
-				if (PyUnicode_Check(listItem)) {
-					const char *columnName = Unicode_AsUTF8(listItem);
-					columnNames.emplace_back(columnName);
-					// todo: free columnName?????
-				} else {
-					// todo: this will break something by leaving out a column name
-				}
-			}
+	for (auto listItem : pyColumnNames) {
+		if (PyUnicode_Check(listItem)) {
+			const char *columnName = Unicode_AsUTF8(listItem);
+			columnNames.emplace_back(columnName);
+			// todo: free columnName?????
+			// todo: free listItem;
+		} else {
+			debug("One of the column names isn't a unicode value? What do we do here?");
+			// todo: this will break something by leaving out a column name
 		}
-
-		// Release the reference to the result
-		Py_XDECREF(result);
 	}
-
-	// Release the reference to the 'column_names' method
-	Py_XDECREF(columnNamesMethod);
-	debug("Number of column names in our C++ vector:  " + std::to_string(columnNames.size()));
 	return columnNames;
 }
 

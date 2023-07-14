@@ -27,7 +27,11 @@ RUN wget https://www.openssl.org/source/openssl-1.1.1c.tar.gz && \
 # Install Target Version of Python
 ARG PYTHON_VERSION
 RUN test -n "$PYTHON_VERSION" && \
-    apt-get install -y -qq python${PYTHON_VERSION}-dev
+    apt-get install -y -qq python${PYTHON_VERSION}-dev python${PYTHON_VERSION} libpython${PYTHON_VERSION} python${PYTHON_VERSION}-distutils python${PYTHON_VERSION}-venv && \
+    curl https://bootstrap.pypa.io/get-pip.py | python${PYTHON_VERSION} && \
+    python$PYTHON_VERSION -m pip install --upgrade pip && \
+    python$PYTHON_VERSION -m venv --help
+
 
 
 # Setup the development environment

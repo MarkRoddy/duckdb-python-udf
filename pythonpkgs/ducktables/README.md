@@ -48,30 +48,13 @@ Note that all queries will assume to run in the region you have specified in you
 ### EC2 Instances
 Returns the results of a [DescribeInstances](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html) API call.
 ```sql
-    SELECT * FROM pytable('aws:ec2_instances',
-      columns = {
-        'instance_id': 'VARCHAR',
-        'name': 'VARCHAR',
-        'instance_type': 'VARCHAR',
-        'state': 'VARCHAR',
-        'key_pair': 'VARCHAR',
-        'platform': 'VARCHAR',
-        'architecture': 'VARCHAR',
-        'vpc_id': 'VARCHAR',
-        'subnet_id': 'VARCHAR',
-        'public_dns': 'VARCHAR',
-        'public_ip': 'VARCHAR',
-        'private_dns': 'VARCHAR',
-        'private_ip': 'VARCHAR'
-        });
+    SELECT * FROM pytable('ducktables.aws:ec2_instances');
 ```
 
 ### S3 Buckets
 Returns the results of a [ListBuckets](https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html) API call.
 ```SQL
-SELECT * FROM pytable('aws:s3_buckets', 
-  columns={'name': 'VARCHAR', 'creation_date': 'VARCHAR'}
-);
+SELECT * FROM pytable('ducktables.aws:s3_buckets');
 ```
 
 ### S3 Objects
@@ -79,17 +62,13 @@ This only includes metadata about the objects themselves, not their contents. Se
 
 Note that the second argument, the prefix path, is optional and can be omitted.
 ```SQL
-SELECT * FROM pytable('aws:s3_objects', 'bucket-name', 'foo/bar/prefix',
-  columns = { 'key': 'VARCHAR', 'last_modified': 'VARCHAR', 'size': 'INT', 'storage_class': 'VARCHAR'}
-);
+SELECT * FROM pytable('ducktables.aws:s3_objects', 'bucket-name', 'foo/bar/prefix');
 ```
 
 ## Github
 Enumerates all repositories for the named user or organization.
 ```SQL
-SELECT * FROM pytable('ghub:repos_for', 'duckdb',
-  columns = {'repo': 'VARCHAR', 'description': 'VARCHAR', 'language': 'VARCHAR'}
-);
+SELECT * FROM pytable('ducktables.githb:repos_for', 'duckdb');
 ```
 
 ## Open AI

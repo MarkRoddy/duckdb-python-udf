@@ -1,0 +1,16 @@
+# name: test/ducktables-integration/openai.test
+# description: Test OpenAI Table Functions
+# group: [ducktables-integration]
+
+# Require statement will ensure this test is run with this extension loaded
+require pytables
+
+
+# Test the Google Sheets integration with their supplied readonly sheet
+query IIII
+SELECT * FROM pytable('ducktables.openai:prompt', 'Please respond with the "Hello" and no other words. The word "Hello" should be capitalized. Also, do not include any punctuation.', 1);
+----
+0	Hello	assistant	stop
+
+
+

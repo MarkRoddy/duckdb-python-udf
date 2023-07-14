@@ -16,4 +16,7 @@ std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObjec
 // Duplicates functionality of PyUnicode_AsUTF8() which is not part of the limited ABI
 char *Unicode_AsUTF8(PyObject *unicodeObject);
 
+// Wrapper around isinstance(), similar to the PyObject_IsInstance() function that isn't
+// part of the limited ABI.
+bool PyIsInstance(PyObject *instance, PyObject *classObj);
 } // namespace pyudf

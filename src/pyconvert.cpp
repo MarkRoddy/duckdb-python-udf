@@ -5,6 +5,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <log.hpp>
+#include <cpy/module.hpp>
 
 namespace pyudf {
 
@@ -160,32 +161,13 @@ void ConvertPyObjectsToDuckDBValues(PyObject *py_iterator, std::vector<duckdb::L
 }
 
 PyObject *pyObjectToIterable(PyObject *py_object) {
-	PyObject *collections_module = PyImport_ImportModule("collections.abc");
-	if (!collections_module) {
-		return nullptr;
+	cpy::Object obj(py_object);
+	cpy::Object iterable_class = cpy::Module("collections.abc").attr("Iterable");
+	if (!obj.isinstance(iterable_class)) {
+		throw std::runtime_error("Object is not an iterable, presumably...");
 	}
-
-	PyObject *iterable_class = PyObject_GetAttrString(collections_module, "Iterable");
-	if (!iterable_class) {
-		Py_DECREF(collections_module);
-		return nullptr;
-	}
-
-	int is_iterable = PyObject_IsInstance(py_object, iterable_class);
-	Py_DECREF(iterable_class);
-	Py_DECREF(collections_module);
-
-	if (!is_iterable) {
-		PyErr_SetString(PyExc_TypeError, "Input must be an iterable or an object that can be iterated upon");
-		return nullptr;
-	}
-
-	PyObject *py_iter = PyObject_GetIter(py_object);
-	if (!py_iter) {
-		PyErr_SetString(PyExc_RuntimeError, "Failed to get iterator from the input object");
-	}
-
-	return py_iter;
+	auto iterobj = obj.iter();
+	return iterobj.getpy();
 }
 
 PyObject *StructToDict(duckdb::Value value) {
@@ -237,7 +219,7 @@ std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObjec
 			}
 
 			// Release the reference to the type name object
-			Py_XDECREF(typeNameObj);
+			Py_DECREF(typeNameObj);
 		}
 	}
 
@@ -271,4 +253,11 @@ char *Unicode_AsUTF8(PyObject *unicodeObject) {
 	return result;
 }
 
+bool PyIsInstance(PyObject *instance, PyObject *classObj) {
+	if (!instance || !classObj) {
+		return false; // Either instance or classObj is a null pointer.
+	}
+	cpy::Object inst(instance);
+	return inst.isinstance(classObj);
+}
 } // namespace pyudf

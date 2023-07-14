@@ -1,0 +1,14 @@
+# name: test/ducktables-integration/github.test
+# description: Test Github Table Functions
+# group: [ducktables-integration]
+
+# Require statement will ensure this test is run with this extension loaded
+require pytables
+
+
+# Test the Google Sheets integration with their supplied readonly sheet
+query III
+SELECT * FROM pytable('ducktables.github:repos_for', 'duckdb')
+WHERE repo = 'duckdb';
+----
+duckdb	DuckDB is an in-process SQL OLAP Database Management System	C++

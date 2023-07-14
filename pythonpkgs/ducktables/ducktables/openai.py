@@ -6,12 +6,13 @@ import openai
 openai.organization = os.getenv("OPENAI_ORG_ID")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+from ducktables import ducktable
+
+@ducktable(index = int, message = str, message_role = str, finish_reason = str)
 def prompt(input_phrase, num_responses = 5):
     """
     SQL Usage:
-    SELECT * FROM pytable('chatgpt:prompt', 'Write a limerick poem about how much you love SQL', 2,
-      columns = {'index': 'INT','message': 'VARCHAR', 'message_role': 'VARCHAR', 'finish_reason': 'VARCHAR'},
-    );
+    SELECT * FROM pytable('ducktables.openai:prompt', 'Write a limerick poem about how much you love SQL', 2);
     """
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",

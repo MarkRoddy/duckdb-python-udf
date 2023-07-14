@@ -49,7 +49,10 @@ void FinalizePyTable(PyScanBindData &bind_data) {
 	Py_ssize_t size = PyTuple_Size(bind_data.arguments);
 	for (Py_ssize_t i = 0; i < size; i++) {
 		PyObject *arg = PyTuple_GetItem(bind_data.arguments, i);
-		Py_XDECREF(arg);
+		// Traced a SegFault that is prevented by not issueing this decref. There
+		// is probably some side effect here that I'm not accounting for, and not
+		// an issue with this decref per say.
+		// Py_DECREF(arg);
 	}
 }
 
@@ -234,12 +237,11 @@ unique_ptr<FunctionData> PyBind(ClientContext &context, TableFunctionBindInput &
 	PythonException *error;
 	std::tie(iter, error) = result->pyfunc->call(result->arguments, result->kwargs);
 	if (!iter) {
-		Py_XDECREF(iter);
 		std::string err = error->message;
 		error->~PythonException();
 		throw std::runtime_error(err);
 	} else if (!PyIter_Check(iter)) {
-		Py_XDECREF(iter);
+		Py_DECREF(iter);
 		throw std::runtime_error("Error: function '" + result->pyfunc->function_name() +
 		                         "' did not return an iterator\n");
 	}

@@ -16,8 +16,11 @@ public:
 
 private:
 	std::vector<PyObject *> pycolumn_types(PyObject *args, PyObject *kwargs);
+	std::vector<PyObject *> call_to_list(std::string attr_name, PyObject *args, PyObject *kwargs);
 	PyObject *wrap_function(PyObject *function);
 	PyObject *import_decorator();
+	PyObject *import_decorator_class();
+	PyObject *import_from_ducktables(std::string attr_name);
 };
 
 } // namespace pyudf

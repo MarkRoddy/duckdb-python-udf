@@ -78,7 +78,13 @@ python-release:
 	rm -f pythonpkgs/ducktables/dist/duck*
 	bash ./scripts/python-release.sh
 
+# Runs DuckDB SQL using functions provided by the Python package. Note that since most of these functions require
+# some kind of auth, you will likely have trouble running these locally without a lot of (presently) undocumented setup.
 python-test-integration:
+	@if [ -z "$(GITHUB_ACCESS_TOKEN)" ]; then echo "Missing GITHUB_ACCESS_TOKEN needed for testing"; exit 1; fi
+	@if [ -z "$(GOOGLE_APPLICATION_CREDENTIALS)" ]; then echo "Missing GOOGLE_APPLICATION_CREDENTIALS needed for testing"; exit 1; fi
+	@if [ -z "$(OPENAI_API_KEY)" ]; then echo "Missing OPENAI_API_KEY needed for testing"; exit 1; fi
+	@if [ -z "$(OPENAI_ORG_ID)" ]; then echo "Missing OPENAI_ORG_ID needed for testing"; exit 1; fi
 	bash ./scripts/python-test-integration.sh
 
 # Tests a build of the extension against a download of DuckDB
@@ -128,11 +134,24 @@ build-container-devel:
 # Assuming you've built the image above, runs a Docker container with your local source
 # checkout mounted and compiles the project.
 container-compile:
-	docker run --rm --interactive \
+	$(MAKE) CONTAINER_CMD="bash scripts/docker-build-in-container.sh $(PYTHON_VERSION)" container-cmd
+
+container-python-test-integration:
+	$(MAKE) CONTAINER_CMD="make python-test-integration" container-cmd
+container-cmd:
+	@if [ -z "$(CONTAINER_CMD)" ]; then echo "Specify a CONTAINER_CMD env to use this target"; exit 1; fi
+	@docker run --rm --interactive \
 	  --volume "$(HOME)/.ccache/:/home/$(USER)/.ccache" \
 	  --volume "$(shell pwd)/:$(shell pwd)" \
+	  --volume "$(shell dirname $(GOOGLE_APPLICATION_CREDENTIALS))/:$(shell dirname $(GOOGLE_APPLICATION_CREDENTIALS))/" \
+	  --volume "$(HOME)/.aws/:/home/$(USER)/.aws" \
+	  -e GITHUB_ACCESS_TOKEN="$(GITHUB_ACCESS_TOKEN)" \
+	  -e GOOGLE_APPLICATION_CREDENTIALS="$(GOOGLE_APPLICATION_CREDENTIALS)" \
+	  -e OPENAI_API_KEY="$(OPENAI_API_KEY)" \
+	  -e OPENAI_ORG_ID="$(OPENAI_ORG_ID)" \
+	  -e PYTHON_VERSION="$(PYTHON_VERSION)" \
 	  build-duckdb-python-py$(PYTHON_VERSION) \
-	  bash -c "cd $(shell pwd) && bash scripts/docker-build-in-container.sh $(PYTHON_VERSION)"
+	  bash -c "cd $(shell pwd) && $(CONTAINER_CMD)"
 
 # Executes the installer script and check that it correctly detects some common misconfigurations
 test-installer:

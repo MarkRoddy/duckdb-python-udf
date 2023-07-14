@@ -45,7 +45,10 @@ jobs:
 
     - name: Setup Python ${{ matrix.python_version }}
       run: |
-        apt-get install -y -qq python${{ matrix.python_version }}-dev
+        apt-get install -y -qq python${{ matrix.python_version }}-dev python${PYTHON_VERSION}-distutils python${PYTHON_VERSION}-venv
+        curl https://bootstrap.pypa.io/get-pip.py | python${PYTHON_VERSION};
+        python$PYTHON_VERSION -m pip install --upgrade pip && \
+        python$PYTHON_VERSION -m venv --help
   
     - uses: actions/checkout@v3
       with:
@@ -127,7 +130,15 @@ jobs:
       run: |
         make python-ci
 
-    - name: Run Integration Tests
+    # Runs the extension + DuckTables functions against the actual APIs they work with
+    - name: Python Integration Tests
+      if: ${{ '<submodule_version>' != matrix.duckdb_version }}
+      run: |
+        echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON_B64 }}" | base64 --decode > gcloud-creds.json         
+        make AWS_ACCESS_KEY_ID=${{ secrets.S3_DEPLOY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.S3_DEPLOY_KEY }} AWS_DEFAULT_REGION=${{ secrets.S3_REGION }} OPENAI_ORG_ID="${{ secrets.OPENAI_ORG_ID }}" OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" GOOGLE_APPLICATION_CREDENTIALS=gcloud-creds.json GITHUB_ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }} python-test-integration
+
+    # Runs the extension against the official DuckDB binary (versus the one built w/this project)
+    - name: Extension Integration Tests
       if: ${{ '<submodule_version>' != matrix.duckdb_version }}
       run: |
         make GITHUB_ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }} DUCKDB_VERSION=${{ env.DUCKDB_VERSION }} extension-integration-tests
