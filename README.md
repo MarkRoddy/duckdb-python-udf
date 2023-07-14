@@ -90,7 +90,7 @@ This will import the name `<module>`, reference the value named `<function>`. No
 Please see the table below for a further breakdown of each of the named arguments.
 | named argument | description |
 | -------------- | ----------- |
-| columns        | Required. A struct mapping column names to expected DuckDB data types.|
+| columns        | Required in some circumstances. A struct mapping column names to expected DuckDB data types. Required when invoking a function that does annotate its return types. May be desirable to use if you want well formed column names. |
 | kwargs         | Optional. A struct mapping named arguments to be passed to the python function. In python, this is passed as if you called `func(**kwargs)`. |
 
 # Writing Python Functions for Use as Tables

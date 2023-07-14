@@ -6,9 +6,26 @@
 require pytables
 
 
-# Test the Google Sheets integration with their supplied readonly sheet
+# Test that we can query a well known Github repo
 query III
 SELECT * FROM pytable('ducktables.github:repos_for', 'duckdb')
 WHERE repo = 'duckdb';
 ----
 duckdb	DuckDB is an in-process SQL OLAP Database Management System	C++
+
+# Test that we can query a workflow in this repo. Note we don't do a `select *` because
+# otherwise we'd need to update the expected output every time the workflow changes to
+# account for the updated_at field changing.
+query IIIII
+SELECT id, name, path, state, url FROM pytable('ducktables.github:workflows', 'MarkRoddy/duckdb-pytables')
+WHERE name = 'Linux'
+----
+51892600	Linux	.github/workflows/Linux.yml	active	https://api.github.com/repos/MarkRoddy/duckdb-pytables/actions/workflows/51892600
+
+# Test that we can query a workflow run for this repo 
+query IIIIIIIIIIIIIIIIIII
+SELECT * FROM pytable('ducktables.github:workflow_runs', 'MarkRoddy/duckdb-pytables')
+WHERE workflow_name = 'Linux'
+  AND id = 1262701582
+----
+1262701582	Linux	main	94295d5c732214caf54493b719a68bb2fdfe1cd9	.github/workflows/Linux.yml	NULL	NULL	push	2023-07-14T19:33:44	completed	failure	51892600	https://api.github.com/repos/MarkRoddy/duckdb-pytables/actions/runs/5557668878	2023-07-14T19:33:44	2023-07-14T19:58:59	https://api.github.com/repos/MarkRoddy/duckdb-pytables/actions/runs/5557668878/jobs	https://api.github.com/repos/MarkRoddy/duckdb-pytables/actions/runs/5557668878/logs	https://api.github.com/repos/MarkRoddy/duckdb-pytables/check-suites/14311677956	https://api.github.com/repos/MarkRoddy/duckdb-pytables/actions/runs/5557668878/artifacts
