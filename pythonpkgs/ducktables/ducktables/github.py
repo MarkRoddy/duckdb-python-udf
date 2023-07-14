@@ -23,12 +23,20 @@ def workflows(repo_name):
            url = str, created_at = str, updated_at = str, jobs_url = str, logs_url = str, check_suite_url = str,
            artifacts_url = str)
 def workflow_runs(repo_name):
+    # The WorkflowRun object doesn't contain information about the workflow itself. So
+    # here we use a Dict to cache the workflow objects themselves so we don't end up
+    # with a GET request for every run enumerated. Especially given the ratio of workflows
+    # to runs is so huge.
     workflows = {}
     repo = g.get_repo(repo_name)
     for r in repo.get_workflow_runs():
+
+        # Do a cached lookup of the workflow associated with the run
         if not r.workflow_id in workflows:
             workflows[r.workflow_id] = repo.get_workflow(r.workflow_id)
         w = workflows[r.workflow_id]
+
+        # Yield our DB record
         yield (r.id, w.name, r.head_branch, r.head_sha, w.path, r.run_attempt, r.run_number, r.event,
                r.run_started_at.isoformat(sep='T',timespec='auto'), r.status, r.conclusion, r.workflow_id,
                r.url, r.created_at.isoformat(sep='T',timespec='auto'), r.updated_at.isoformat(sep='T',timespec='auto'),

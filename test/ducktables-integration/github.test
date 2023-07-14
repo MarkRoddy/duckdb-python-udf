@@ -13,12 +13,14 @@ WHERE repo = 'duckdb';
 ----
 duckdb	DuckDB is an in-process SQL OLAP Database Management System	C++
 
-# Test that we can query a workflow in this repo 
-query IIIIIII
-SELECT * FROM pytable('ducktables.github:workflows', 'MarkRoddy/duckdb-pytables')
+# Test that we can query a workflow in this repo. Note we don't do a `select *` because
+# otherwise we'd need to update the expected output every time the workflow changes to
+# account for the updated_at field changing.
+query IIIII
+SELECT id, name, path, state, url FROM pytable('ducktables.github:workflows', 'MarkRoddy/duckdb-pytables')
 WHERE name = 'Linux'
 ----
-51892600	Linux	.github/workflows/Linux.yml	active	2023-03-21T10:40:49	2023-05-26T11:30:23	https://api.github.com/repos/MarkRoddy/duckdb-pytables/actions/workflows/51892600
+51892600	Linux	.github/workflows/Linux.yml	active	https://api.github.com/repos/MarkRoddy/duckdb-pytables/actions/workflows/51892600
 
 # Test that we can query a workflow run for this repo 
 query IIIIIIIIIIIIIIIIIII
