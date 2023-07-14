@@ -1,3 +1,7 @@
+# Note there is a reference to this workflow in test/ducktables-integration/github.test. It queries
+# the Workflows endpoint of the Github API and uses this Workflow to test the integration. If you
+# rename or move or refactor or whatever, that test will break *after* the change is merged to main.
+
 name: Linux
 on: [push]
 concurrency:

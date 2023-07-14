@@ -66,18 +66,33 @@ SELECT * FROM pytable('ducktables.aws:s3_objects', 'bucket-name', 'foo/bar/prefi
 ```
 
 ## Github
+
+### Repositories
 Enumerates all repositories for the named user or organization.
 ```SQL
 SELECT * FROM pytable('ducktables.githb:repos_for', 'duckdb');
 ```
+
+### Workflows
+Enumerate each Github Actions Workflow associated with a repository
+```SQL
+SELECT * FROM pytable('ducktables.github:workflows', 'MarkRoddy/duckdb-pytables')
+```
+
+### Workflow Runs
+List each execution of every Github Actions Workflow run on a repository.
+```SQL
+SELECT * FROM pytable('ducktables.github:workflow_runs', 'MarkRoddy/duckdb-pytables')
+```
+
+
 
 ## Open AI
 
 ### ChatGPT
 Given a prompt and a number of desired responses, will generate a table with the model's response.
 ```SQL
-SELECT * FROM pytable('chatgpt:prompt', 'Write a limerick poem about how much you love SQL', 2,
-  columns = {'index': 'INT','message': 'VARCHAR', 'message_role': 'VARCHAR', 'finish_reason': 'VARCHAR'},
+SELECT * FROM pytable('chatgpt:prompt', 'Write a limerick poem about how much you love SQL', 2)
 );
 ```
 
