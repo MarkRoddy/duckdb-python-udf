@@ -24,7 +24,7 @@ net.ednit.duckdb-extensions
 # Query Objects in S3 Bucket
 query I
 SELECT key
-FROM pytable('ducktables.aws:s3_objects', 'net.ednit.duckdb-extensions', 'pytables/latest/python3.9/')
+FROM pytable('ducktables.aws:s3_objects', 'net.ednit.duckdb-extensions', 'pytables/latest/python3.9/v0.8.0/linux_amd64/')
 ----
 pytables/latest/python3.9/v0.8.0/linux_amd64/pytables.duckdb_extension.gz
 
