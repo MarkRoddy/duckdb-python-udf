@@ -1,13 +1,12 @@
 
-# 0.1.4 (pending)
+# 0.1.4
 
 Features:
 * Binaries for OSX on amd64 (this does not include M1 chips)
 * Support for recently released DuckDB v0.8.1
-* Python function decorator that publishes schema information to the extension
-
-Fixes:
-* 
+* Python function decorator for specifying a functions DuckDB output schema.
+* The `columns` argument is no longer required if a python function use the above decorator.
+* DuckTables sources for Github Actions.
 
 # 0.1.3
 
