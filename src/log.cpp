@@ -5,9 +5,13 @@
 
 namespace pyudf {
 bool _debugEnabled = std::getenv("PYTABLES_DEBUG") != nullptr;
-void debug(const std::string &msg) {
+void debug(const std::string &msg, bool print_endl) {
 	if (_debugEnabled) {
-		std::cerr << msg << std::endl;
+		if (print_endl) {
+			std::cerr << msg << std::endl;
+		} else {
+			std::cerr << msg << std::endl;
+		}
 	}
 }
 } // namespace pyudf
