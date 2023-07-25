@@ -10,7 +10,7 @@ void debug(const std::string &msg, bool print_endl) {
 		if (print_endl) {
 			std::cerr << msg << std::endl;
 		} else {
-			std::cerr << msg << std::endl;
+			std::cerr << msg;
 		}
 	}
 }
