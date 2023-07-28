@@ -79,8 +79,6 @@ void PyScan(ClientContext &context, TableFunctionInput &data, DataChunk &output)
 				PyErr_Clear();
 				std::string msg = py::cast<std::string>(py::str(e.value()));
 				throw std::runtime_error(msg);
-				// throw std::runtime_error("Error: function '" + result->pyfunc->function_name() +
-				//                  "' did not return an iterator\n");
 			}
 
 			std::vector<duckdb::Value> duck_row = {};
@@ -226,12 +224,13 @@ unique_ptr<FunctionData> PyBind(ClientContext &context, TableFunctionBindInput &
 
 	// Invoke the function and grab a copy of the iterable it returns.
 	py::object maybe_iter;
-	PythonException *error;
-	std::tie(maybe_iter, error) = result->pyfunc->call(result->objArguments, result->objKwargs);
-	if (error) {
-		std::string err = error->message;
-		error->~PythonException();
-		throw std::runtime_error(err);
+	try {
+		maybe_iter = result->pyfunc->call(result->objArguments, result->objKwargs);
+	} catch (py::error_already_set &e) {
+		e.restore();
+		PyErr_Clear();
+		std::string msg = py::cast<std::string>(py::str(e.value()));
+		throw std::runtime_error(msg);
 	}
 
 	py::iterator iter;

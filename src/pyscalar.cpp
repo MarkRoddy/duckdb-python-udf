@@ -30,16 +30,16 @@ static void PyScalarFunction(DataChunk &args, ExpressionState &state, Vector &re
 		py::tuple pyargs = duckdbs_to_pyobjs(duck_args);
 
 		py::object pyresult;
-		PythonException *error;
-		std::tie(pyresult, error) = func.call(pyargs);
-		if (error) {
-			std::string err = error->message;
-			error->~PythonException();
-			throw std::runtime_error(err);
-		} else {
-			auto ddb_result = ConvertPyBindObjectToDuckDBValue(pyresult, duckdb::LogicalTypeId::VARCHAR);
-			result.SetValue(row, ddb_result);
+		try {
+			pyresult = func.call(pyargs);
+		} catch (py::error_already_set &e) {
+			e.restore();
+			PyErr_Clear();
+			std::string msg = py::cast<std::string>(py::str(e.value()));
+			throw std::runtime_error(msg);
 		}
+		auto ddb_result = ConvertPyBindObjectToDuckDBValue(pyresult, duckdb::LogicalTypeId::VARCHAR);
+		result.SetValue(row, ddb_result);
 	}
 }
 

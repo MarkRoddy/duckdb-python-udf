@@ -16,11 +16,13 @@ class PythonFunction {
 public:
 	PythonFunction(const std::string &module_name, const std::string &function_name);
 	PythonFunction(const std::string &module_and_function);
+	PythonFunction(py::object function);
 
 	~PythonFunction();
 
-	std::pair<py::object, PythonException *> call(py::tuple args) const;
-	std::pair<py::object, PythonException *> call(py::tuple args, py::dict kwargs) const;
+	py::object call(py::tuple args) const;
+	py::object call(py::tuple args, py::dict kwargs) const;
+
 
 	std::string function_name() {
 		return function_name_;
@@ -31,14 +33,15 @@ public:
 
 protected:
 	void init(const std::string &module_name, const std::string &function_name);
-	PyObject *function;
+	void init_old(const std::string &module_name, const std::string &function_name);
+	PyObject* function;
+	py::function functionObj;
 
 private:
 	std::string module_name_;
 	std::string function_name_;
+
 	PyObject *module;
-	std::pair<PyObject *, PythonException *> call(PyObject *args) const;
-	std::pair<PyObject *, PythonException *> call(PyObject *args, PyObject *kwargs) const;	
 };
 
 } // namespace pyudf
