@@ -75,6 +75,10 @@ PyObject *duckdbs_to_pys(std::vector<duckdb::Value> &values) {
 	return py_tuple;
 }
 
+duckdb::Value ConvertPyBindObjectToDuckDBValue(py::object py_item, duckdb::LogicalType logical_type) {
+	return ConvertPyObjectToDuckDBValue(py_item.ptr(), logical_type);
+}
+
 duckdb::Value ConvertPyObjectToDuckDBValue(PyObject *py_item, duckdb::LogicalType logical_type) {
 	duckdb::Value value;
 	PyObject *py_value;

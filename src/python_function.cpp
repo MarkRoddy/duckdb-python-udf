@@ -48,6 +48,17 @@ PythonFunction::~PythonFunction() {
 	Py_DECREF(module);
 }
 
+std::pair<py::object, PythonException *> PythonFunction::call(py::tuple args) const {
+	PyObject *ptr;
+	PythonException *error;
+	std::tie(ptr, error) = call(args.ptr());
+	py::object obj;
+	if (ptr) {
+		obj = py::reinterpret_steal<py::object>(ptr);
+	}
+	return std::make_pair(obj, error);
+}
+	
 std::pair<py::object, PythonException *> PythonFunction::call(py::tuple args, py::dict kwargs) const {
 	PyObject *ptr;
 	PythonException *error;
