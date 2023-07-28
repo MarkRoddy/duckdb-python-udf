@@ -23,7 +23,6 @@ public:
 	py::object call(py::tuple args) const;
 	py::object call(py::tuple args, py::dict kwargs) const;
 
-
 	std::string function_name() {
 		return function_name_;
 	}
@@ -34,7 +33,7 @@ public:
 protected:
 	void init(const std::string &module_name, const std::string &function_name);
 	void init_old(const std::string &module_name, const std::string &function_name);
-	PyObject* function;
+	PyObject *function;
 	py::function functionObj;
 
 private:

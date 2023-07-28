@@ -19,16 +19,16 @@ PythonFunction::PythonFunction(const std::string &module_name, const std::string
 	init_old(module_name, function_name);
 }
 
-PythonFunction::PythonFunction(py::object function) : functionObj(function){
+PythonFunction::PythonFunction(py::object function) : functionObj(function) {
 }
 
-void PythonFunction::init(const std::string &module_name, const std::string &function_name) {	
+void PythonFunction::init(const std::string &module_name, const std::string &function_name) {
 	module_name_ = module_name;
 	function_name_ = function_name;
 	py::module_ module;
 	try {
-	    module = py::module_::import(module_name.c_str());
-    } catch (py::error_already_set &e) {
+		module = py::module_::import(module_name.c_str());
+	} catch (py::error_already_set &e) {
 		e.restore();
 		PyErr_Clear();
 		throw std::runtime_error("Failed to import module: " + module_name);
@@ -37,7 +37,7 @@ void PythonFunction::init(const std::string &module_name, const std::string &fun
 	if (!py::hasattr(module, function_name.c_str())) {
 		throw std::runtime_error("Failed to find function: " + function_name);
 	}
-	
+
 	py::object maybe_function = module.attr(function_name.c_str());
 	try {
 		functionObj = maybe_function.cast<py::function>();
@@ -73,7 +73,7 @@ void PythonFunction::init_old(const std::string &module_name, const std::string 
 	}
 	function = function_obj;
 }
-	
+
 PythonFunction::~PythonFunction() {
 	Py_DECREF(function);
 	Py_DECREF(module);
