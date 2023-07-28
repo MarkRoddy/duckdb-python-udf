@@ -6,8 +6,14 @@
 #include <unordered_map>
 #include <log.hpp>
 #include <cpy/module.hpp>
+#include <stdexcept>
 
 namespace pyudf {
+
+py::object duckdb_to_pyobj(duckdb::Value &value) {
+	PyObject* ptr = duckdb_to_py(value);
+	return py::reinterpret_steal<py::object>(ptr);
+}
 
 PyObject *duckdb_to_py(duckdb::Value &value) {
 	PyObject *py_value = nullptr;
@@ -46,6 +52,15 @@ PyObject *duckdb_to_py(duckdb::Value &value) {
 		py_value = Py_None;
 	}
 	return py_value;
+}
+
+py::tuple duckdbs_to_pyobjs(std::vector<duckdb::Value> &values) {
+	PyObject* ptr = duckdbs_to_pys(values);
+	if (nullptr == ptr) {
+		throw duckdb::IOException("Failed coerce duckdb values to python values");
+	} else {
+		return py::reinterpret_steal<py::tuple>(ptr);
+	}
 }
 
 PyObject *duckdbs_to_pys(std::vector<duckdb::Value> &values) {
@@ -119,6 +134,30 @@ duckdb::Value ConvertPyObjectToDuckDBValue(PyObject *py_item, duckdb::LogicalTyp
 		value = duckdb::Value((std::nullptr_t)NULL);
 	}
 	return value;
+}
+
+void ConvertPyBindObjectsToDuckDBValues(py::iterator it, std::vector<duckdb::LogicalType> logical_types,
+										std::vector<duckdb::Value> &result) {
+	size_t index = 0;
+	while (it != py::iterator::sentinel()) {
+		py::handle obj = *it;
+
+		if (index >= logical_types.size()) {
+			std::string error_message = "A row with " + std::to_string(index + 1) + " values was detected though " +
+				std::to_string(logical_types.size()) + " columns were expected";
+			throw duckdb::InvalidInputException(error_message);
+		}
+		duckdb::LogicalType logical_type = logical_types[index];
+		duckdb::Value value = ConvertPyObjectToDuckDBValue(obj.ptr(), logical_type);
+		result.push_back(value);
+		++it;
+		index++;
+	}
+	if (index != logical_types.size()) {
+		std::string error_message = "A row with " + std::to_string(index) + " values was detected though " +
+		                std::to_string(logical_types.size()) + " columns were expected";
+		throw duckdb::InvalidInputException(error_message);
+	}
 }
 
 void ConvertPyObjectsToDuckDBValues(PyObject *py_iterator, std::vector<duckdb::LogicalType> logical_types,

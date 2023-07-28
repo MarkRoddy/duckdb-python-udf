@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 #include <python_exception.hpp>
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
 
 namespace pyudf {
 
@@ -19,6 +21,8 @@ public:
 
 	std::pair<PyObject *, PythonException *> call(PyObject *args) const;
 	std::pair<PyObject *, PythonException *> call(PyObject *args, PyObject *kwargs) const;
+	// std::pair<PyObject *, PythonException *> call(py::tuple args, py::dict kwargs) const;
+	std::pair<py::object, PythonException *> call(py::tuple args, py::dict kwargs) const;
 	std::string function_name() {
 		return function_name_;
 	}

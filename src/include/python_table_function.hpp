@@ -6,13 +6,18 @@
 #include <utility>
 #include <duckdb.hpp>
 
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+
 namespace pyudf {
 class PythonTableFunction : public PythonFunction {
 public:
 	PythonTableFunction(const std::string &function_specifier);
 	PythonTableFunction(const std::string &module_name, const std::string &function_name);
 	std::vector<std::string> column_names(PyObject *args, PyObject *kwargs);
+	std::vector<std::string> column_names(py::tuple args, py::dict kwargs);
 	std::vector<duckdb::LogicalType> column_types(PyObject *args, PyObject *kwargs);
+	std::vector<duckdb::LogicalType> column_types(py::tuple args, py::dict kwargs);
 
 private:
 	std::vector<PyObject *> pycolumn_types(PyObject *args, PyObject *kwargs);

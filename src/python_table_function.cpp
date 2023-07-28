@@ -5,6 +5,7 @@
 #include <pyconvert.hpp>
 #include <string>
 #include <log.hpp>
+#include <cpy/exception.hpp>
 
 namespace pyudf {
 
@@ -158,7 +159,9 @@ std::vector<PyObject *> PythonTableFunction::call_to_list(std::string attr_name,
 
 	// Invoke the method with args and kwargs
 	PyObject *result = PyObject_Call(method, args, kwargs);
-	if (!result) {
+	if (PyErr_Occurred()) {
+		throw cpy::Exception();
+	} else if (!result) {
 		debug("The function's " + attr_name + " method returned null. Did an error occur?");
 		Py_DECREF(method);
 		return items;
@@ -195,6 +198,15 @@ std::vector<PyObject *> PythonTableFunction::pycolumn_types(PyObject *args, PyOb
 	return call_to_list("column_types", args, kwargs);
 }
 
+std::vector<std::string> PythonTableFunction::column_names(py::tuple args, py::dict kwargs) {
+    return column_names(args.ptr(), kwargs.ptr());	
+}
+
+std::vector<duckdb::LogicalType> PythonTableFunction::column_types(py::tuple args, py::dict kwargs) {
+	return column_types(args.ptr(), kwargs.ptr());
+}
+
+	
 std::vector<duckdb::LogicalType> PythonTableFunction::column_types(PyObject *args, PyObject *kwargs) {
 	auto python_types = pycolumn_types(args, kwargs);
 	// todo: check for a Python error?
