@@ -19,8 +19,6 @@ public:
 
 	~PythonFunction();
 
-	std::pair<PyObject *, PythonException *> call(PyObject *args) const;
-	std::pair<PyObject *, PythonException *> call(PyObject *args, PyObject *kwargs) const;
 	std::pair<py::object, PythonException *> call(py::tuple args) const;
 	std::pair<py::object, PythonException *> call(py::tuple args, py::dict kwargs) const;
 
@@ -39,6 +37,8 @@ private:
 	std::string module_name_;
 	std::string function_name_;
 	PyObject *module;
+	std::pair<PyObject *, PythonException *> call(PyObject *args) const;
+	std::pair<PyObject *, PythonException *> call(PyObject *args, PyObject *kwargs) const;	
 };
 
 } // namespace pyudf
