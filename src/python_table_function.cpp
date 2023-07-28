@@ -199,14 +199,13 @@ std::vector<PyObject *> PythonTableFunction::pycolumn_types(PyObject *args, PyOb
 }
 
 std::vector<std::string> PythonTableFunction::column_names(py::tuple args, py::dict kwargs) {
-    return column_names(args.ptr(), kwargs.ptr());	
+	return column_names(args.ptr(), kwargs.ptr());
 }
 
 std::vector<duckdb::LogicalType> PythonTableFunction::column_types(py::tuple args, py::dict kwargs) {
 	return column_types(args.ptr(), kwargs.ptr());
 }
 
-	
 std::vector<duckdb::LogicalType> PythonTableFunction::column_types(PyObject *args, PyObject *kwargs) {
 	auto python_types = pycolumn_types(args, kwargs);
 	// todo: check for a Python error?

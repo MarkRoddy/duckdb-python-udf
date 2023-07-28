@@ -11,7 +11,7 @@
 namespace pyudf {
 
 py::object duckdb_to_pyobj(duckdb::Value &value) {
-	PyObject* ptr = duckdb_to_py(value);
+	PyObject *ptr = duckdb_to_py(value);
 	return py::reinterpret_steal<py::object>(ptr);
 }
 
@@ -55,7 +55,7 @@ PyObject *duckdb_to_py(duckdb::Value &value) {
 }
 
 py::tuple duckdbs_to_pyobjs(std::vector<duckdb::Value> &values) {
-	PyObject* ptr = duckdbs_to_pys(values);
+	PyObject *ptr = duckdbs_to_pys(values);
 	if (nullptr == ptr) {
 		throw duckdb::IOException("Failed coerce duckdb values to python values");
 	} else {
@@ -141,14 +141,14 @@ duckdb::Value ConvertPyObjectToDuckDBValue(PyObject *py_item, duckdb::LogicalTyp
 }
 
 void ConvertPyBindObjectsToDuckDBValues(py::iterator it, std::vector<duckdb::LogicalType> logical_types,
-										std::vector<duckdb::Value> &result) {
+                                        std::vector<duckdb::Value> &result) {
 	size_t index = 0;
 	while (it != py::iterator::sentinel()) {
 		py::handle obj = *it;
 
 		if (index >= logical_types.size()) {
 			std::string error_message = "A row with " + std::to_string(index + 1) + " values was detected though " +
-				std::to_string(logical_types.size()) + " columns were expected";
+			                            std::to_string(logical_types.size()) + " columns were expected";
 			throw duckdb::InvalidInputException(error_message);
 		}
 		duckdb::LogicalType logical_type = logical_types[index];
@@ -159,7 +159,7 @@ void ConvertPyBindObjectsToDuckDBValues(py::iterator it, std::vector<duckdb::Log
 	}
 	if (index != logical_types.size()) {
 		std::string error_message = "A row with " + std::to_string(index) + " values was detected though " +
-		                std::to_string(logical_types.size()) + " columns were expected";
+		                            std::to_string(logical_types.size()) + " columns were expected";
 		throw duckdb::InvalidInputException(error_message);
 	}
 }

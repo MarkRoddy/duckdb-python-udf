@@ -23,7 +23,7 @@ public:
 	std::pair<PyObject *, PythonException *> call(PyObject *args, PyObject *kwargs) const;
 	std::pair<py::object, PythonException *> call(py::tuple args) const;
 	std::pair<py::object, PythonException *> call(py::tuple args, py::dict kwargs) const;
-	
+
 	std::string function_name() {
 		return function_name_;
 	}

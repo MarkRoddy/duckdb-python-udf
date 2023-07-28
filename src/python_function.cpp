@@ -58,7 +58,7 @@ std::pair<py::object, PythonException *> PythonFunction::call(py::tuple args) co
 	}
 	return std::make_pair(obj, error);
 }
-	
+
 std::pair<py::object, PythonException *> PythonFunction::call(py::tuple args, py::dict kwargs) const {
 	PyObject *ptr;
 	PythonException *error;
@@ -69,7 +69,7 @@ std::pair<py::object, PythonException *> PythonFunction::call(py::tuple args, py
 	}
 	return std::make_pair(obj, error);
 }
-	
+
 std::pair<PyObject *, PythonException *> PythonFunction::call(PyObject *args, PyObject *kwargs) const {
 	PyObject *result = PyObject_Call(function, args, kwargs);
 

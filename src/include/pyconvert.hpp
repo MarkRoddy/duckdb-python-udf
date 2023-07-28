@@ -6,7 +6,6 @@
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
-
 namespace pyudf {
 PyObject *duckdb_to_py(duckdb::Value &value);
 PyObject *duckdbs_to_pys(std::vector<duckdb::Value> &values);
@@ -18,7 +17,7 @@ duckdb::Value ConvertPyBindObjectToDuckDBValue(py::object py_item, duckdb::Logic
 void ConvertPyObjectsToDuckDBValues(PyObject *py_iterator, std::vector<duckdb::LogicalType> logical_types,
                                     std::vector<duckdb::Value> &result);
 void ConvertPyBindObjectsToDuckDBValues(py::iterator pyiter, std::vector<duckdb::LogicalType> logical_types,
-                                    std::vector<duckdb::Value> &result);
+                                        std::vector<duckdb::Value> &result);
 PyObject *pyObjectToIterable(PyObject *py_object);
 std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObject *> &pyTypes);
 

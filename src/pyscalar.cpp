@@ -28,7 +28,7 @@ static void PyScalarFunction(DataChunk &args, ExpressionState &state, Vector &re
 			duck_args.emplace_back(value);
 		}
 		py::tuple pyargs = duckdbs_to_pyobjs(duck_args);
-		
+
 		py::object pyresult;
 		PythonException *error;
 		std::tie(pyresult, error) = func.call(pyargs);

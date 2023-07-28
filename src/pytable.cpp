@@ -46,7 +46,7 @@ void FinalizePyTable(PyScanBindData &bind_data) {
 	// Free the iterable returned by our python function call
 	// Py_DECREF(bind_data.function_result_iterable);
 	// bind_data.function_result_iterable = nullptr;
-    // todo: manually delete//deallocate the py::object values on this struct
+	// todo: manually delete//deallocate the py::object values on this struct
 }
 
 void PyScan(ClientContext &context, TableFunctionInput &data, DataChunk &output) {
@@ -71,7 +71,7 @@ void PyScan(ClientContext &context, TableFunctionInput &data, DataChunk &output)
 			try {
 				iter_row = py::iter(objRow);
 
-			} catch (py::error_already_set& e) {
+			} catch (py::error_already_set &e) {
 				// Assuming the error was because the object can't be iterated
 				// upon though techincally it could be due to an error in an
 				// object's __iter__() function.
@@ -80,10 +80,10 @@ void PyScan(ClientContext &context, TableFunctionInput &data, DataChunk &output)
 				std::string msg = py::cast<std::string>(py::str(e.value()));
 				throw std::runtime_error(msg);
 				// throw std::runtime_error("Error: function '" + result->pyfunc->function_name() +
-		        //                  "' did not return an iterator\n");
+				//                  "' did not return an iterator\n");
 			}
-				
-			std::vector<duckdb::Value> duck_row = {};	
+
+			std::vector<duckdb::Value> duck_row = {};
 			ConvertPyBindObjectsToDuckDBValues(iter_row, bind_data.return_types, duck_row);
 			for (long unsigned int i = 0; i < duck_row.size(); i++) {
 				auto v = duck_row.at(i);
@@ -92,7 +92,7 @@ void PyScan(ClientContext &context, TableFunctionInput &data, DataChunk &output)
 			}
 			output.SetCardinality(output.size() + 1);
 		}
-		
+
 		try {
 			// If our Python function returned an iterable object such as a list or a
 			// tuple, this operation is safe. But if the function returns an iterator
@@ -233,11 +233,11 @@ unique_ptr<FunctionData> PyBind(ClientContext &context, TableFunctionBindInput &
 		error->~PythonException();
 		throw std::runtime_error(err);
 	}
-	
+
 	py::iterator iter;
 	try {
 		iter = py::iter(maybe_iter);
-	} catch (py::error_already_set& e) {
+	} catch (py::error_already_set &e) {
 		// Assuming the error was because the object can't be iterated
 		// upon though techincally it could be due to an error in an
 		// object's __iter__() function.
