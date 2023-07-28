@@ -10,17 +10,15 @@
 namespace pyudf {
 
 PythonTableFunction::PythonTableFunction(const std::string &function_specifier) : PythonFunction(function_specifier) {
-	auto wrapped = wrap_function(function);
-	if (wrapped) {
-		debug("Successfully wrapped the function");
-		function = wrapped;
-	} else {
-		debug("Failed to find function wrapper, this may be ok?");
-	}
+	init();
 }
 
 PythonTableFunction::PythonTableFunction(const std::string &module_name, const std::string &function_name)
     : PythonFunction(module_name, function_name) {
+	init();
+}
+
+void PythonTableFunction::init() {
 	auto wrapped = wrap_function(function);
 	if (wrapped) {
 		debug("Successfully wrapped the function");
@@ -30,6 +28,15 @@ PythonTableFunction::PythonTableFunction(const std::string &module_name, const s
 	}
 }
 
+std::vector<std::string> PythonTableFunction::column_names(py::tuple args, py::dict kwargs) {
+	return column_names(args.ptr(), kwargs.ptr());
+}
+
+std::vector<duckdb::LogicalType> PythonTableFunction::column_types(py::tuple args, py::dict kwargs) {
+	return column_types(args.ptr(), kwargs.ptr());
+}
+
+	
 PyObject *PythonTableFunction::wrap_function(PyObject *function) {
 	debug("About to import the decorator");
 	PyObject *decorator = import_decorator();
@@ -196,14 +203,6 @@ std::vector<PyObject *> PythonTableFunction::call_to_list(std::string attr_name,
 
 std::vector<PyObject *> PythonTableFunction::pycolumn_types(PyObject *args, PyObject *kwargs) {
 	return call_to_list("column_types", args, kwargs);
-}
-
-std::vector<std::string> PythonTableFunction::column_names(py::tuple args, py::dict kwargs) {
-	return column_names(args.ptr(), kwargs.ptr());
-}
-
-std::vector<duckdb::LogicalType> PythonTableFunction::column_types(py::tuple args, py::dict kwargs) {
-	return column_types(args.ptr(), kwargs.ptr());
 }
 
 std::vector<duckdb::LogicalType> PythonTableFunction::column_types(PyObject *args, PyObject *kwargs) {

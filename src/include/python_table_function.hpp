@@ -18,6 +18,7 @@ public:
 	std::vector<duckdb::LogicalType> column_types(py::tuple args, py::dict kwargs);
 
 private:
+	void init();
 	std::vector<PyObject *> pycolumn_types(PyObject *args, PyObject *kwargs);
 	std::vector<PyObject *> call_to_list(std::string attr_name, PyObject *args, PyObject *kwargs);
 	PyObject *wrap_function(PyObject *function);
