@@ -13,12 +13,14 @@ get_filename_component(PYTHON_LIB_NAME ${Python_LIBRARIES} NAME)
 configure_file(src/include/config.h.in config.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-include_directories(src/include ${Python_INCLUDE_DIRS})
+include_directories(src/include ${Python_INCLUDE_DIRS} pybind11/include)
 
 FILE(GLOB_RECURSE EXTENSION_SOURCES src/*.cpp)
 
 # Define Py_LIMITED_API for all source files, pins us to Python 3.4.
-add_definitions(-DPy_LIMITED_API=0x03040000)
+# Note this restriction had to be lifted to integrate PyBind11 which does
+# not conform to the limited ABI.
+# add_definitions(-DPy_LIMITED_API=0x03040000)
 
 add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})
 
