@@ -10,6 +10,7 @@ namespace cpy {
 class Module : public cpy::Object {
 
 public:
+	Module();
 	Module(const std::string &module_name);
 
 private:

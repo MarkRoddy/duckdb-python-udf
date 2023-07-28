@@ -46,11 +46,28 @@ def table2(one_str_input, two_str_input, three_int_input):
         yield [c]
     yield [str(three_int_input)]
 
-
 def table_throws_exception(input):
     raise Exception("This function raises an exception")
 
+from datetime import date, datetime, time, timedelta, timezone
+def repeat_timeval(num_rows, hour, minute, second, microsec, utc_offset) -> Iterable[Tuple[int, time]]:
+    """Constructs a datetime.time value and enumerates `num_rows` rows"""
+    tz = timezone(timedelta(hours=utc_offset))
+    t = time(hour = hour, minute = minute, second = second, microsecond=microsec, tzinfo = tz)
+    for i in range(num_rows):
+        yield (i, t)
 
+def repeat_dateval(num_rows, year, month, day) -> Iterable[Tuple[int, date]]:
+    d = date(year, month, day)
+    for i in range(num_rows):
+        yield (i, d)
+
+def repeat_datetime(num_rows, year, month, day, hour, minute, second, microsec, utc_offset) -> Iterable[Tuple[int, datetime]]:
+    tz = timezone(timedelta(hours=utc_offset))
+    dt = datetime(year = year, month = month, day = day, hour = hour, minute = minute, second = second, microsecond=microsec, tzinfo = tz)
+    for i in range(num_rows):
+        yield (i, dt)
+    
 def iterator_throws_exception(input):
     yield ["foo"]
     yield ["bar"]
@@ -145,6 +162,48 @@ class TestUdfs(unittest.TestCase):
         self.assertEqual('buzz', fizzbuzz(5))
         self.assertEqual('7', fizzbuzz(7))
 
-        
+    def test_repeat_timeval(self):
+        tz_pst = timezone(timedelta(hours=-7)) # US West Coast / PST
+        t = time(hour = 3, minute = 35, second = 12, microsecond = 38, tzinfo = tz_pst)
+        actual = list(repeat_timeval(2, 3, 35, 12, 38, -7))
+        expected = [
+            (0, t),
+            (1, t)
+            ]
+        self.assertEqual(actual, expected)
+
+    def test_repeat_dateval(self):
+        d = date(2023, 7, 10)
+        actual = list(repeat_dateval(2, 2023, 7, 10))
+        expected = [
+            (0, d),
+            (1, d)
+            ]
+        self.assertEqual(actual, expected)
+
+    def test_repeat_datetime(self):
+        tz = timezone(timedelta(hours=-7)) # US West Coast / PST
+        dt = datetime(2023, 7, 10, 2, 32, 15, 5500, tz)
+        actual = list(repeat_datetime(2, 2023, 7, 10, 2, 32, 15, 5500, -7))
+        expected = [
+            (0, dt),
+            (1, dt),
+            ]
+        self.assertEqual(actual, expected)
+# def repeat_datetime(num_rows, year, month, day, hour, minute, second, microsec, utc_offset) -> Iterable[Tuple[int, datetime]]:
+# def repeate_dateval(num_rows, year, month, day) -> Iterable[Tuple[int, date]]:
+    # def test_table_with_date_time_values(self):
+    #     tz_utc = timezone(timedelta(0)) # UTC
+    #     tz_cet = timezone(timedelta(hours=1)) # Central European Time
+    #     t = time(hour = 3, minute = 35, second = 12, tzinfo = tz_cet)
+    #     d = date(2023, 7, 10)
+    #     dt = datetime(2023, 7, 12, hour = 2, minute = 32, second = 15, tzinfo = tz_utc)
+    #     actual = list(table_with_date_time_values("foo"))
+    #     expected = [
+    #         (0, 'f', t, d, dt),
+    #         (1, 'o', t, d, dt),
+    #         (2, 'o', t, d, dt)]
+    #     self.assertEqual(actual, expected)
+
 if __name__ == '__main__':
     unittest.main()

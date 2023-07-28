@@ -1,0 +1,45 @@
+# name: test/sql/pytable_type_conversions.test
+# description: test conversion of Python types to DuckDB types
+# group: [pytables]
+
+
+# Require statement will ensure this test is run with this extension loaded
+require pytables
+
+# Check the conversion of datetime.time objects, note the timezone is explicitly dropped as DuckDB Time objects don't support TZ
+# def repeat_timeval(num_rows, hour, minute, second, microsec, utc_offset) -> Iterable[Tuple[int, time]]:
+query II
+SELECT * FROM pytable('udfs:repeat_timeval', 2, 3, 35, 12, 5500, -7)
+----
+0	03:35:12.0055
+1	03:35:12.0055
+
+# Check conversion of datetime.date objects
+query II
+SELECT * FROM pytable('udfs:repeat_dateval', 2, 2022, 12, 25)
+----
+0	2022-12-25
+1	2022-12-25
+
+# Check conversion of datetime.datetime objects
+query II
+SELECT * FROM pytable('udfs:repeat_datetime', 2, 2022, 12, 25, 3, 45, 12, 5500, 0)
+----
+0	2022-12-25 03:45:12.0055+00
+1	2022-12-25 03:45:12.0055+00
+
+# Check that timezone is accounted for in the conversion of datetime objects
+query II
+SELECT * FROM pytable('udfs:repeat_datetime', 2, 2022, 12, 25, 3, 45, 12, 5500, -7)
+----
+0	2022-12-25 03:45:12.0055-07
+1	2022-12-25 03:45:12.0055-07
+
+
+# Check that Time, Date, and DateTime values are supported
+query IIIII
+SELECT * FROM pytable('udfs:table_with_date_time_values', 'foo')
+----
+0	f	03:35:12	2023-07-10	2023-07-12 02:32:15+00
+1	o	03:35:12	2023-07-10	2023-07-12 02:32:15+00
+2 	o	03:35:12	2023-07-10	2023-07-12 02:32:15+00

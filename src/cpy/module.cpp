@@ -4,7 +4,8 @@
 #include <cpy/module.hpp>
 
 namespace cpy {
-Module::Module(const std::string &module_name) : cpy::Object(doImport(module_name), true) {
+	Module::Module() {}
+	Module::Module(const std::string &module_name) : cpy::Object(doImport(module_name), true) {
 	module_name_ = module_name;
 }
 
