@@ -58,7 +58,6 @@ void PyScan(ClientContext &context, TableFunctionInput &data, DataChunk &output)
 		return;
 	}
 	py::iterator resultIter = bind_data.objFunction_result_iterable;
-	int read_records = 0;
 	for (int read_records = 0; read_records < STANDARD_VECTOR_SIZE; ++read_records) {
 		if (resultIter == py::iterator::sentinel()) {
 			// We've exhausted our iterator

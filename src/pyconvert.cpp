@@ -230,6 +230,14 @@ PyObject *StructToDict(duckdb::Value value) {
 	return py_value;
 }
 
+std::vector<duckdb::LogicalType> PyBindTypesToLogicalTypes(const std::vector<py::object> &pyTypes) {
+	std::vector<PyObject *> ptrVec;
+	for (auto pyobj : pyTypes) {
+		ptrVec.emplace_back(pyobj.ptr());
+	}
+	return PyTypesToLogicalTypes(ptrVec);
+}
+
 std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObject *> &pyTypes) {
 	std::vector<duckdb::LogicalType> logicalTypes;
 

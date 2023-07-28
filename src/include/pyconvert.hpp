@@ -20,6 +20,7 @@ void ConvertPyBindObjectsToDuckDBValues(py::iterator pyiter, std::vector<duckdb:
                                         std::vector<duckdb::Value> &result);
 PyObject *pyObjectToIterable(PyObject *py_object);
 std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObject *> &pyTypes);
+std::vector<duckdb::LogicalType> PyBindTypesToLogicalTypes(const std::vector<py::object> &pyTypes);
 
 // Duplicates functionality of PyUnicode_AsUTF8() which is not part of the limited ABI
 char *Unicode_AsUTF8(PyObject *unicodeObject);
