@@ -3,16 +3,17 @@
 #define CPY_EXCEPTION_HPP
 
 #include <string>
+#include <stdexcept>
 #include <Python.h>
 #include <cpy/object.hpp>
 
 namespace cpy {
-class Exception {
+class Exception : std::runtime_error {
 
 public:
-	Exception();
-	Exception(cpy::Object pytype, cpy::Object pymessage, cpy::Object pytraceback, std::string _type,
-	          std::string _message, std::string _traceback);
+	static Exception gather();
+	// Exception();
+	Exception(std::string _type, std::string _message, std::string _traceback);
 
 	Exception(const Exception &);                 // copy
 	Exception(Exception &&);                      // move
@@ -22,13 +23,10 @@ public:
 	std::string traceback() const;
 
 private:
-	cpy::Object pytype;
-	cpy::Object pymessage;
-	cpy::Object pytraceback;
-
 	std::string _type;
 	std::string _message;
 	std::string _traceback;
+	
 };
 
 } // namespace cpy

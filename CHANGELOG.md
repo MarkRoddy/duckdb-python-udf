@@ -1,4 +1,9 @@
 
+# 0.1.5 (pending)
+
+Features:
+* Python datetime types (time, date, datetime) now converted to native DuckDB types.
+
 # 0.1.4
 
 Features:

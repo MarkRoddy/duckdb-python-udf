@@ -5,7 +5,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <log.hpp>
+#include <cpy/object.hpp>
 #include <cpy/module.hpp>
+#include <py_to_ddb.hpp>
 
 namespace pyudf {
 
@@ -61,64 +63,8 @@ PyObject *duckdbs_to_pys(std::vector<duckdb::Value> &values) {
 }
 
 duckdb::Value ConvertPyObjectToDuckDBValue(PyObject *py_item, duckdb::LogicalType logical_type) {
-	duckdb::Value value;
-	PyObject *py_value;
-	bool conversion_failed = false;
-
-	switch (logical_type.id()) {
-	case duckdb::LogicalTypeId::BOOLEAN:
-		if (!PyBool_Check(py_item)) {
-			conversion_failed = true;
-		} else {
-			value = duckdb::Value(Py_True == py_item);
-		}
-		break;
-	case duckdb::LogicalTypeId::TINYINT:
-	case duckdb::LogicalTypeId::SMALLINT:
-	case duckdb::LogicalTypeId::INTEGER:
-		if (!PyLong_Check(py_item)) {
-			conversion_failed = true;
-		} else {
-			value = duckdb::Value((int32_t)PyLong_AsLong(py_item));
-		}
-		break;
-	// case duckdb::LogicalTypeId::BIGINT:
-	//   if (!PyLong_Check(py_item)) {
-	//     conversion_failed = true;
-	//   } else {
-	//     value = duckdb::Value(PyLong_AsLongLong(py_item));
-	//   }
-	//   break;
-	case duckdb::LogicalTypeId::FLOAT:
-	case duckdb::LogicalTypeId::DOUBLE:
-		if (!PyFloat_Check(py_item)) {
-			conversion_failed = true;
-		} else {
-			value = duckdb::Value(PyFloat_AsDouble(py_item));
-		}
-		break;
-	case duckdb::LogicalTypeId::VARCHAR:
-		if (!PyUnicode_Check(py_item)) {
-			conversion_failed = true;
-		} else {
-			py_value = PyUnicode_AsUTF8String(py_item);
-			value = duckdb::Value(PyBytes_AsString(py_value));
-			Py_DECREF(py_value);
-		}
-		break;
-		// Add more cases for other LogicalTypes here
-	case duckdb::LogicalTypeId::STRUCT:
-		py_value = StructToDict(value);
-		break;
-	default:
-		conversion_failed = true;
-	}
-
-	if (conversion_failed) {
-		// DUCKDB_API Value(std::nullptr_t val); // NOLINT: Allow implicit conversion from `nullptr_t`
-		value = duckdb::Value((std::nullptr_t)NULL);
-	}
-	return value;
+	PyToDDB converter;
+	return converter.convert(py_item, logical_type);
 }
 
 void ConvertPyObjectsToDuckDBValues(PyObject *py_iterator, std::vector<duckdb::LogicalType> logical_types,
@@ -195,6 +141,9 @@ std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObjec
 	    {"int", duckdb::LogicalType::INTEGER},
 	    {"str", duckdb::LogicalType::VARCHAR},
 	    {"float", duckdb::LogicalType::DOUBLE},
+		{"time", duckdb::LogicalType::TIME},
+		{"date", duckdb::LogicalType::DATE},
+		{"datetime", duckdb::LogicalType::TIMESTAMP_TZ},
 	    // TODO: Add more mappings for other supported Python types
 	};
 

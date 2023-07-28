@@ -1,3 +1,5 @@
+
+#include <log.hpp>
 #include <duckdb.hpp>
 #include <python_function.hpp>
 #include <python_exception.hpp>
@@ -22,6 +24,7 @@ void PythonFunction::init(const std::string &module_name, const std::string &fun
 	function_name_ = function_name;
 	module = nullptr;
 	function = nullptr;
+	debug("Attempting to import: " + module_name);
 	PyObject *module_obj = PyImport_ImportModule(module_name.c_str());
 	if (!module_obj) {
 		PyErr_Print();
