@@ -14,9 +14,7 @@ class PythonTableFunction : public PythonFunction {
 public:
 	PythonTableFunction(const std::string &function_specifier);
 	PythonTableFunction(const std::string &module_name, const std::string &function_name);
-	std::vector<std::string> column_names(PyObject *args, PyObject *kwargs);
 	std::vector<std::string> column_names(py::tuple args, py::dict kwargs);
-	std::vector<duckdb::LogicalType> column_types(PyObject *args, PyObject *kwargs);
 	std::vector<duckdb::LogicalType> column_types(py::tuple args, py::dict kwargs);
 
 private:
@@ -26,6 +24,9 @@ private:
 	PyObject *import_decorator();
 	PyObject *import_decorator_class();
 	PyObject *import_from_ducktables(std::string attr_name);
+	std::vector<std::string> column_names(PyObject *args, PyObject *kwargs);
+	std::vector<duckdb::LogicalType> column_types(PyObject *args, PyObject *kwargs);
+
 };
 
 } // namespace pyudf

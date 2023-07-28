@@ -11,12 +11,10 @@ PythonFunction::PythonFunction(const std::string &function_specifier) {
 	std::string function_name;
 	std::tie(module_name, function_name) = parse_func_specifier(function_specifier);
 	init(module_name, function_name);
-	init_old(module_name, function_name);
 }
 
 PythonFunction::PythonFunction(const std::string &module_name, const std::string &function_name) {
 	init(module_name, function_name);
-	init_old(module_name, function_name);
 }
 
 PythonFunction::PythonFunction(py::object function) : functionObj(function) {
@@ -46,6 +44,7 @@ void PythonFunction::init(const std::string &module_name, const std::string &fun
 		PyErr_Clear();
 		throw std::runtime_error("Function is not callable: " + function_name);
 	}
+    init_old(module_name, function_name);
 }
 
 void PythonFunction::init_old(const std::string &module_name, const std::string &function_name) {
