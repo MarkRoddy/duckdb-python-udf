@@ -44,7 +44,7 @@ void PythonFunction::init(const std::string &module_name, const std::string &fun
 		PyErr_Clear();
 		throw std::runtime_error("Function is not callable: " + function_name);
 	}
-    init_old(module_name, function_name);
+	init_old(module_name, function_name);
 }
 
 void PythonFunction::init_old(const std::string &module_name, const std::string &function_name) {
