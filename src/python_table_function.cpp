@@ -23,13 +23,16 @@ void PythonTableFunction::init() {
 	try {
 		mod = py::module_::import("ducktables");
 	} catch (py::error_already_set &e) {
-		// This could be something other than ImportError, but we
-		// can revisit that later.
-		debug("Error importing ducktables, assuming it isn't installed");
-		e.restore();
-		PyErr_Clear();
-		return;
+		if (e.matches(PyExc_ImportError)) {
+			debug("Error importing ducktables, assuming it isn't installed");		
+			e.restore();
+			PyErr_Clear();
+			return;
+		} else {
+			throw;
+		}
 	}
+	
 	// Wrap the function in our Python decorator
 	py::object decorator = mod.attr("DuckTableSchemaWrapper");
 	py::tuple args = py::make_tuple(functionObj);
