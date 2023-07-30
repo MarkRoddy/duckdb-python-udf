@@ -1,6 +1,5 @@
 #include <duckdb.hpp>
 #include <python_function.hpp>
-#include <python_exception.hpp>
 #include <stdexcept>
 #include <typeinfo>
 

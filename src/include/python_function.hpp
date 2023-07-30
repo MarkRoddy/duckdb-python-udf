@@ -4,7 +4,6 @@
 #include <Python.h>
 #include <string>
 #include <utility>
-#include <python_exception.hpp>
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
