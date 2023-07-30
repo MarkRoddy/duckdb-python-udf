@@ -44,38 +44,9 @@ void PythonFunction::init(const std::string &module_name, const std::string &fun
 		PyErr_Clear();
 		throw std::runtime_error("Function is not callable: " + function_name);
 	}
-	init_old(module_name, function_name);
-}
-
-void PythonFunction::init_old(const std::string &module_name, const std::string &function_name) {
-	module_name_ = module_name;
-	function_name_ = function_name;
-	module = nullptr;
-	function = nullptr;
-	PyObject *module_obj = PyImport_ImportModule(module_name.c_str());
-	if (!module_obj) {
-		PyErr_Print();
-		throw std::runtime_error("Failed to import module: " + module_name);
-	}
-
-	module = module_obj;
-
-	PyObject *function_obj = PyObject_GetAttrString(module, function_name.c_str());
-	if (!function_obj) {
-		PyErr_Print();
-		throw std::runtime_error("Failed to find function: " + function_name);
-	}
-
-	if (!PyCallable_Check(function_obj)) {
-		Py_DECREF(function_obj);
-		throw std::runtime_error("Function is not callable: " + function_name);
-	}
-	function = function_obj;
 }
 
 PythonFunction::~PythonFunction() {
-	Py_DECREF(function);
-	Py_DECREF(module);
 }
 
 py::object PythonFunction::call(py::tuple args) const {

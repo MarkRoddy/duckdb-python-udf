@@ -32,15 +32,11 @@ public:
 
 protected:
 	void init(const std::string &module_name, const std::string &function_name);
-	void init_old(const std::string &module_name, const std::string &function_name);
-	PyObject *function;
 	py::function functionObj;
 
 private:
 	std::string module_name_;
 	std::string function_name_;
-
-	PyObject *module;
 };
 
 } // namespace pyudf
