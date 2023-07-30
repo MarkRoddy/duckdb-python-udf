@@ -10,9 +10,31 @@
 
 namespace pyudf {
 
-py::object duckdb_to_pyobj(duckdb::Value &value) {
-	PyObject *ptr = duckdb_to_py(value);
-	return py::reinterpret_steal<py::object>(ptr);
+// Duplicates functionality of PyUnicode_AsUTF8() which is not part of the limited ABI
+char *Unicode_AsUTF8(PyObject *unicodeObject) {
+	PyObject *utf8 = PyUnicode_AsUTF8String(unicodeObject);
+	if (utf8 == nullptr) {
+		PyErr_Print();
+		return nullptr;
+	}
+
+	char *bytes = PyBytes_AsString(utf8);
+	if (bytes == nullptr) {
+		Py_DECREF(utf8);
+		PyErr_Print();
+		return nullptr;
+	}
+
+	char *result = strdup(bytes);
+	Py_DECREF(utf8);
+
+	if (result == nullptr) {
+		PyErr_SetString(PyExc_MemoryError, "Out of memory");
+		PyErr_Print();
+		return nullptr;
+	}
+
+	return result;
 }
 
 PyObject *duckdb_to_py(duckdb::Value &value) {
@@ -44,7 +66,8 @@ PyObject *duckdb_to_py(duckdb::Value &value) {
 		py_value = PyUnicode_FromString(value.GetValue<std::string>().c_str());
 		break;
 	case duckdb::LogicalTypeId::STRUCT:
-		py_value = StructToDict(value);
+		py_value = StructToDict(value).ptr();
+		Py_INCREF(py_value);
 		break;
 	default:
 		debug("Unhandled Logical Type: " + value.type().ToString());
@@ -54,13 +77,25 @@ PyObject *duckdb_to_py(duckdb::Value &value) {
 	return py_value;
 }
 
-py::tuple duckdbs_to_pyobjs(std::vector<duckdb::Value> &values) {
-	PyObject *ptr = duckdbs_to_pys(values);
-	if (nullptr == ptr) {
-		throw duckdb::IOException("Failed coerce duckdb values to python values");
-	} else {
-		return py::reinterpret_steal<py::tuple>(ptr);
+py::dict StructToDict(duckdb::Value value) {
+	py::dict py_value;
+	auto &child_type = value.type();
+	auto &struct_children = duckdb::StructValue::GetChildren(value);
+	D_ASSERT(duckdb::StructType::GetChildCount(child_type) == struct_children.size());
+	for (idx_t i = 0; i < struct_children.size(); i++) {
+		duckdb::Value name = duckdb::StructType::GetChildName(child_type, i);
+		duckdb::Value val = struct_children[i];
+
+		auto pyName = duckdb_to_py(name);
+		auto pyValue = duckdb_to_py(val);
+		py_value[pyName] = pyValue;
 	}
+	return py_value;
+}
+
+py::object duckdb_to_pyobj(duckdb::Value &value) {
+	PyObject *ptr = duckdb_to_py(value);
+	return py::reinterpret_steal<py::object>(ptr);
 }
 
 PyObject *duckdbs_to_pys(std::vector<duckdb::Value> &values) {
@@ -73,6 +108,15 @@ PyObject *duckdbs_to_pys(std::vector<duckdb::Value> &values) {
 	}
 
 	return py_tuple;
+}
+
+py::tuple duckdbs_to_pyobjs(std::vector<duckdb::Value> &values) {
+	PyObject *ptr = duckdbs_to_pys(values);
+	if (nullptr == ptr) {
+		throw duckdb::IOException("Failed coerce duckdb values to python values");
+	} else {
+		return py::reinterpret_steal<py::tuple>(ptr);
+	}
 }
 
 duckdb::Value ConvertPyBindObjectToDuckDBValue(py::object py_item, duckdb::LogicalType logical_type) {
@@ -127,7 +171,8 @@ duckdb::Value ConvertPyObjectToDuckDBValue(PyObject *py_item, duckdb::LogicalTyp
 		break;
 		// Add more cases for other LogicalTypes here
 	case duckdb::LogicalTypeId::STRUCT:
-		py_value = StructToDict(value);
+		py_value = StructToDict(value).ptr();
+		Py_INCREF(py_value);
 		break;
 	default:
 		conversion_failed = true;
@@ -162,72 +207,6 @@ void ConvertPyBindObjectsToDuckDBValues(py::iterator it, std::vector<duckdb::Log
 		                            std::to_string(logical_types.size()) + " columns were expected";
 		throw duckdb::InvalidInputException(error_message);
 	}
-}
-
-void ConvertPyObjectsToDuckDBValues(PyObject *py_iterator, std::vector<duckdb::LogicalType> logical_types,
-                                    std::vector<duckdb::Value> &result) {
-
-	if (!PyIter_Check(py_iterator)) {
-		throw duckdb::InvalidInputException("First argument must be an iterator");
-	}
-
-	PyObject *py_item;
-	size_t index = 0;
-	std::string error_message;
-	while ((py_item = PyIter_Next(py_iterator))) {
-		if (index >= logical_types.size()) {
-			Py_DECREF(py_item);
-			error_message = "A row with " + std::to_string(index + 1) + " values was detected though " +
-			                std::to_string(logical_types.size()) + " columns were expected",
-			throw duckdb::InvalidInputException(error_message);
-		}
-		duckdb::LogicalType logical_type = logical_types[index];
-
-		duckdb::Value value = ConvertPyObjectToDuckDBValue(py_item, logical_type);
-		result.push_back(value);
-		Py_DECREF(py_item);
-		index++;
-	}
-
-	if (PyErr_Occurred()) {
-		// todo: use our Python exception wrapper
-		error_message = "Python runtime error occurred during iteration";
-		PyErr_Clear();
-		throw std::runtime_error(error_message);
-	}
-
-	if (index != logical_types.size()) {
-		error_message = "A row with " + std::to_string(index) + " values was detected though " +
-		                std::to_string(logical_types.size()) + " columns were expected";
-		throw duckdb::InvalidInputException(error_message);
-	}
-}
-
-PyObject *pyObjectToIterable(PyObject *py_object) {
-	cpy::Object obj(py_object);
-	cpy::Object iterable_class = cpy::Module("collections.abc").attr("Iterable");
-	if (!obj.isinstance(iterable_class)) {
-		throw std::runtime_error("Object is not an iterable, presumably...");
-	}
-	auto iterobj = obj.iter();
-	return iterobj.getpy();
-}
-
-PyObject *StructToDict(duckdb::Value value) {
-	// Build the keyword argument dictionary
-	PyObject *py_value = PyDict_New();
-	auto &child_type = value.type();
-	auto &struct_children = duckdb::StructValue::GetChildren(value);
-	D_ASSERT(duckdb::StructType::GetChildCount(child_type) == struct_children.size());
-	for (idx_t i = 0; i < struct_children.size(); i++) {
-		duckdb::Value name = duckdb::StructType::GetChildName(child_type, i);
-		duckdb::Value val = struct_children[i];
-
-		auto pyName = duckdb_to_py(name);
-		auto pyValue = duckdb_to_py(val);
-		PyDict_SetItem(py_value, pyName, pyValue);
-	}
-	return py_value;
 }
 
 std::vector<duckdb::LogicalType> PyBindTypesToLogicalTypes(const std::vector<py::object> &pyTypes) {
@@ -275,40 +254,5 @@ std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObjec
 	}
 
 	return logicalTypes;
-}
-
-// Duplicates functionality of PyUnicode_AsUTF8() which is not part of the limited ABI
-char *Unicode_AsUTF8(PyObject *unicodeObject) {
-	PyObject *utf8 = PyUnicode_AsUTF8String(unicodeObject);
-	if (utf8 == nullptr) {
-		PyErr_Print();
-		return nullptr;
-	}
-
-	char *bytes = PyBytes_AsString(utf8);
-	if (bytes == nullptr) {
-		Py_DECREF(utf8);
-		PyErr_Print();
-		return nullptr;
-	}
-
-	char *result = strdup(bytes);
-	Py_DECREF(utf8);
-
-	if (result == nullptr) {
-		PyErr_SetString(PyExc_MemoryError, "Out of memory");
-		PyErr_Print();
-		return nullptr;
-	}
-
-	return result;
-}
-
-bool PyIsInstance(PyObject *instance, PyObject *classObj) {
-	if (!instance || !classObj) {
-		return false; // Either instance or classObj is a null pointer.
-	}
-	cpy::Object inst(instance);
-	return inst.isinstance(classObj);
 }
 } // namespace pyudf
