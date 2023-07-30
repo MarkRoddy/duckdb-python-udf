@@ -208,14 +208,6 @@ void ConvertPyBindObjectsToDuckDBValues(py::iterator it, std::vector<duckdb::Log
 	}
 }
 
-std::vector<duckdb::LogicalType> PyBindTypesToLogicalTypes(const std::vector<py::object> &pyTypes) {
-	std::vector<PyObject *> ptrVec;
-	for (auto pyobj : pyTypes) {
-		ptrVec.emplace_back(pyobj.ptr());
-	}
-	return PyTypesToLogicalTypes(ptrVec);
-}
-
 std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObject *> &pyTypes) {
 	std::vector<duckdb::LogicalType> logicalTypes;
 
@@ -254,4 +246,12 @@ std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObjec
 
 	return logicalTypes;
 }
+std::vector<duckdb::LogicalType> PyBindTypesToLogicalTypes(const std::vector<py::object> &pyTypes) {
+	std::vector<PyObject *> ptrVec;
+	for (auto pyobj : pyTypes) {
+		ptrVec.emplace_back(pyobj.ptr());
+	}
+	return PyTypesToLogicalTypes(ptrVec);
+}
+
 } // namespace pyudf
