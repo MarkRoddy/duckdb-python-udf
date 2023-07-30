@@ -5,7 +5,6 @@
 #include <pyconvert.hpp>
 #include <string>
 #include <log.hpp>
-#include <cpy/exception.hpp>
 
 namespace pyudf {
 

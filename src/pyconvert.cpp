@@ -5,7 +5,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <log.hpp>
-#include <cpy/module.hpp>
 #include <stdexcept>
 
 namespace pyudf {
