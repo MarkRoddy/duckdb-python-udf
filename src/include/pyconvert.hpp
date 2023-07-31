@@ -14,5 +14,6 @@ duckdb::Value ConvertPyObjectToDuckDBValue(PyObject *py_item, duckdb::LogicalTyp
 duckdb::Value ConvertPyBindObjectToDuckDBValue(py::object py_item, duckdb::LogicalType logical_type);
 void ConvertPyBindObjectsToDuckDBValues(py::iterator pyiter, std::vector<duckdb::LogicalType> logical_types,
                                         std::vector<duckdb::Value> &result);
+duckdb::LogicalType PyTypeToDuckDBLogicalType(py::object pyType);
 std::vector<duckdb::LogicalType> PyBindTypesToLogicalTypes(const std::vector<py::object> &pyTypes);
 } // namespace pyudf

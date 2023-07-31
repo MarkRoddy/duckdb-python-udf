@@ -208,50 +208,31 @@ void ConvertPyBindObjectsToDuckDBValues(py::iterator it, std::vector<duckdb::Log
 	}
 }
 
-std::vector<duckdb::LogicalType> PyTypesToLogicalTypes(const std::vector<PyObject *> &pyTypes) {
-	std::vector<duckdb::LogicalType> logicalTypes;
-
-	// Map Python type names to DuckDB logical types
-	std::unordered_map<std::string, duckdb::LogicalType> typeMap = {
-	    {"int", duckdb::LogicalType::INTEGER},
-	    {"str", duckdb::LogicalType::VARCHAR},
-	    {"float", duckdb::LogicalType::DOUBLE},
-	    // TODO: Add more mappings for other supported Python types
-	};
-
-	// Iterate over the Python type objects
-	for (PyObject *pyType : pyTypes) {
-		if (PyType_Check(pyType)) {
-			// Get the type name as a C++ string
-			PyObject *typeNameObj = PyObject_GetAttrString(pyType, "__name__");
-			if (typeNameObj && PyUnicode_Check(typeNameObj)) {
-				const char *typeName = Unicode_AsUTF8(typeNameObj);
-
-				// Find the corresponding DuckDB logical type
-				auto it = typeMap.find(typeName);
-				if (it != typeMap.end()) {
-					logicalTypes.push_back(it->second);
-				} else {
-					// Unknown type, add an invalid logical type
-					logicalTypes.push_back(duckdb::LogicalType::INVALID);
-				}
-
-				// todo: free typeName?
-			}
-
-			// Release the reference to the type name object
-			Py_DECREF(typeNameObj);
+duckdb::LogicalType PyTypeToDuckDBLogicalType(py::object pyType) {
+	if(!py::isinstance<py::type>(pyType)) {
+		debug("Trying to convert a python object that is not a Type into a duckdb type, returning invalid");
+		return duckdb::LogicalType::INVALID;
+	} else {
+		if (pyType.is(py::type::of(py::str()))) {
+			return duckdb::LogicalType::VARCHAR;
+		} else if (pyType.is(py::type::of(py::int_()))) {
+			return duckdb::LogicalType::INTEGER;
+		} else if (pyType.is(py::type::of(py::float_()))) {
+			return duckdb::LogicalType::DOUBLE;
+		} else {
+			debug("Trying to convert an unknonwn type, returning invalid");
+			return duckdb::LogicalType::INVALID;
 		}
 	}
-
-	return logicalTypes;
 }
+
 std::vector<duckdb::LogicalType> PyBindTypesToLogicalTypes(const std::vector<py::object> &pyTypes) {
-	std::vector<PyObject *> ptrVec;
+	std::vector<duckdb::LogicalType> result;
 	for (auto pyobj : pyTypes) {
-		ptrVec.emplace_back(pyobj.ptr());
+		duckdb::LogicalType converted = PyTypeToDuckDBLogicalType(pyobj);
+		result.emplace_back(converted);
 	}
-	return PyTypesToLogicalTypes(ptrVec);
+	return result;
 }
 
 } // namespace pyudf
