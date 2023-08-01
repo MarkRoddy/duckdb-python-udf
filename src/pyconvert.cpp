@@ -36,46 +36,6 @@ char *Unicode_AsUTF8(PyObject *unicodeObject) {
 	return result;
 }
 
-PyObject *duckdb_to_py(duckdb::Value &value) {
-	PyObject *py_value = nullptr;
-
-	switch (value.type().id()) {
-	case duckdb::LogicalTypeId::BOOLEAN:
-		py_value = PyBool_FromLong(value.GetValue<bool>());
-		break;
-	case duckdb::LogicalTypeId::TINYINT:
-		py_value = PyLong_FromLong(value.GetValue<int8_t>());
-		break;
-	case duckdb::LogicalTypeId::SMALLINT:
-		py_value = PyLong_FromLong(value.GetValue<int16_t>());
-		break;
-	case duckdb::LogicalTypeId::INTEGER:
-		py_value = PyLong_FromLong(value.GetValue<int32_t>());
-		break;
-	case duckdb::LogicalTypeId::BIGINT:
-		py_value = PyLong_FromLongLong(value.GetValue<int64_t>());
-		break;
-	case duckdb::LogicalTypeId::FLOAT:
-		py_value = PyFloat_FromDouble(value.GetValue<float>());
-		break;
-	case duckdb::LogicalTypeId::DOUBLE:
-		py_value = PyFloat_FromDouble(value.GetValue<double>());
-		break;
-	case duckdb::LogicalTypeId::VARCHAR:
-		py_value = PyUnicode_FromString(value.GetValue<std::string>().c_str());
-		break;
-	case duckdb::LogicalTypeId::STRUCT:
-		py_value = StructToDict(value).ptr();
-		Py_INCREF(py_value);
-		break;
-	default:
-		debug("Unhandled Logical Type: " + value.type().ToString());
-		Py_INCREF(Py_None);
-		py_value = Py_None;
-	}
-	return py_value;
-}
-
 py::dict StructToDict(duckdb::Value value) {
 	py::dict py_value;
 	auto &child_type = value.type();
@@ -85,37 +45,57 @@ py::dict StructToDict(duckdb::Value value) {
 		duckdb::Value name = duckdb::StructType::GetChildName(child_type, i);
 		duckdb::Value val = struct_children[i];
 
-		auto pyName = duckdb_to_py(name);
-		auto pyValue = duckdb_to_py(val);
+		auto pyName = duckdb_to_pyobj(name);
+		auto pyValue = duckdb_to_pyobj(val);
 		py_value[pyName] = pyValue;
 	}
 	return py_value;
 }
 
 py::object duckdb_to_pyobj(duckdb::Value &value) {
-	PyObject *ptr = duckdb_to_py(value);
-	return py::reinterpret_steal<py::object>(ptr);
-}
-
-PyObject *duckdbs_to_pys(std::vector<duckdb::Value> &values) {
-	PyObject *py_tuple = PyTuple_New(values.size());
-
-	for (size_t i = 0; i < values.size(); i++) {
-		PyObject *py_value = nullptr;
-		py_value = duckdb_to_py(values[i]);
-		PyTuple_SetItem(py_tuple, i, py_value);
+	py::object py_value;
+	switch (value.type().id()) {
+	case duckdb::LogicalTypeId::BOOLEAN:
+		py_value = py::cast(value.GetValue<bool>());
+		break;
+	case duckdb::LogicalTypeId::TINYINT:
+		py_value = py::cast(value.GetValue<int8_t>());
+		break;
+	case duckdb::LogicalTypeId::SMALLINT:
+		py_value = py::cast(value.GetValue<int16_t>());
+		break;
+	case duckdb::LogicalTypeId::INTEGER:
+		py_value = py::cast(value.GetValue<int32_t>());
+		break;
+	case duckdb::LogicalTypeId::BIGINT:
+		py_value = py::cast(value.GetValue<int64_t>());
+		break;
+	case duckdb::LogicalTypeId::FLOAT:
+		py_value = py::cast(value.GetValue<float>());
+		break;
+	case duckdb::LogicalTypeId::DOUBLE:
+		py_value = py::cast(value.GetValue<double>());
+		break;
+	case duckdb::LogicalTypeId::VARCHAR:
+		py_value = py::cast(value.GetValue<std::string>().c_str());
+		break;
+	case duckdb::LogicalTypeId::STRUCT:
+		py_value = StructToDict(value);
+		break;
+	default:
+		debug("Unhandled Logical Type: " + value.type().ToString());
+		py_value = py::none();
 	}
-
-	return py_tuple;
+	return py_value;
 }
 
 py::tuple duckdbs_to_pyobjs(std::vector<duckdb::Value> &values) {
-	PyObject *ptr = duckdbs_to_pys(values);
-	if (nullptr == ptr) {
-		throw duckdb::IOException("Failed coerce duckdb values to python values");
-	} else {
-		return py::reinterpret_steal<py::tuple>(ptr);
+	py::tuple py_tuple(values.size());
+	for (size_t i = 0; i < values.size(); i++) {
+		py::object pyvalue = duckdb_to_pyobj(values[i]);
+		py_tuple[i] = pyvalue;
 	}
+	return py_tuple;
 }
 
 duckdb::Value ConvertPyBindObjectToDuckDBValue(py::object py_item, duckdb::LogicalType logical_type) {
