@@ -9,33 +9,6 @@
 
 namespace pyudf {
 
-// Duplicates functionality of PyUnicode_AsUTF8() which is not part of the limited ABI
-char *Unicode_AsUTF8(PyObject *unicodeObject) {
-	PyObject *utf8 = PyUnicode_AsUTF8String(unicodeObject);
-	if (utf8 == nullptr) {
-		PyErr_Print();
-		return nullptr;
-	}
-
-	char *bytes = PyBytes_AsString(utf8);
-	if (bytes == nullptr) {
-		Py_DECREF(utf8);
-		PyErr_Print();
-		return nullptr;
-	}
-
-	char *result = strdup(bytes);
-	Py_DECREF(utf8);
-
-	if (result == nullptr) {
-		PyErr_SetString(PyExc_MemoryError, "Out of memory");
-		PyErr_Print();
-		return nullptr;
-	}
-
-	return result;
-}
-
 py::dict StructToDict(duckdb::Value value) {
 	py::dict py_value;
 	auto &child_type = value.type();
@@ -98,67 +71,48 @@ py::tuple duckdbs_to_pyobjs(std::vector<duckdb::Value> &values) {
 	return py_tuple;
 }
 
-duckdb::Value ConvertPyBindObjectToDuckDBValue(py::object py_item, duckdb::LogicalType logical_type) {
-	return ConvertPyObjectToDuckDBValue(py_item.ptr(), logical_type);
-}
-
-duckdb::Value ConvertPyObjectToDuckDBValue(PyObject *py_item, duckdb::LogicalType logical_type) {
+duckdb::Value ConvertPyBindObjectToDuckDBValue(py::handle py_item, duckdb::LogicalType logical_type) {
 	duckdb::Value value;
-	PyObject *py_value;
 	bool conversion_failed = false;
 
 	switch (logical_type.id()) {
 	case duckdb::LogicalTypeId::BOOLEAN:
-		if (!PyBool_Check(py_item)) {
-			conversion_failed = true;
+		if (py::isinstance<py::bool_>(py_item)) {
+			// value = duckdb::Value(Py_True == py_item);
+			value = duckdb::Value(py_item.cast<bool>());
 		} else {
-			value = duckdb::Value(Py_True == py_item);
+			conversion_failed = true;
 		}
 		break;
 	case duckdb::LogicalTypeId::TINYINT:
 	case duckdb::LogicalTypeId::SMALLINT:
 	case duckdb::LogicalTypeId::INTEGER:
-		if (!PyLong_Check(py_item)) {
-			conversion_failed = true;
+		if(py::isinstance<py::int_>(py_item)) {
+			value = duckdb::Value(py_item.cast<int32_t>());
 		} else {
-			value = duckdb::Value((int32_t)PyLong_AsLong(py_item));
+			conversion_failed = true;
 		}
 		break;
-	// case duckdb::LogicalTypeId::BIGINT:
-	//   if (!PyLong_Check(py_item)) {
-	//     conversion_failed = true;
-	//   } else {
-	//     value = duckdb::Value(PyLong_AsLongLong(py_item));
-	//   }
-	//   break;
 	case duckdb::LogicalTypeId::FLOAT:
 	case duckdb::LogicalTypeId::DOUBLE:
-		if (!PyFloat_Check(py_item)) {
-			conversion_failed = true;
+		if(py::isinstance<py::float_>(py_item)) {
+			value = duckdb::Value(py_item.cast<float>());
 		} else {
-			value = duckdb::Value(PyFloat_AsDouble(py_item));
+			conversion_failed = true;
 		}
 		break;
 	case duckdb::LogicalTypeId::VARCHAR:
-		if (!PyUnicode_Check(py_item)) {
-			conversion_failed = true;
+		if(py::isinstance<py::str>(py_item)) {
+			value = duckdb::Value(py_item.cast<std::string>());
 		} else {
-			py_value = PyUnicode_AsUTF8String(py_item);
-			value = duckdb::Value(PyBytes_AsString(py_value));
-			Py_DECREF(py_value);
+			conversion_failed = true;
 		}
-		break;
-		// Add more cases for other LogicalTypes here
-	case duckdb::LogicalTypeId::STRUCT:
-		py_value = StructToDict(value).ptr();
-		Py_INCREF(py_value);
 		break;
 	default:
 		conversion_failed = true;
 	}
 
 	if (conversion_failed) {
-		// DUCKDB_API Value(std::nullptr_t val); // NOLINT: Allow implicit conversion from `nullptr_t`
 		value = duckdb::Value((std::nullptr_t)NULL);
 	}
 	return value;
@@ -176,7 +130,7 @@ void ConvertPyBindObjectsToDuckDBValues(py::iterator it, std::vector<duckdb::Log
 			throw duckdb::InvalidInputException(error_message);
 		}
 		duckdb::LogicalType logical_type = logical_types[index];
-		duckdb::Value value = ConvertPyObjectToDuckDBValue(obj.ptr(), logical_type);
+		duckdb::Value value = ConvertPyBindObjectToDuckDBValue(obj, logical_type);
 		result.push_back(value);
 		++it;
 		index++;

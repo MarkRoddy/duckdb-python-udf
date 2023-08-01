@@ -10,8 +10,7 @@ namespace pyudf {
 py::object duckdb_to_pyobj(duckdb::Value &value);
 py::tuple duckdbs_to_pyobjs(std::vector<duckdb::Value> &values);
 py::dict StructToDict(duckdb::Value value);
-duckdb::Value ConvertPyObjectToDuckDBValue(PyObject *py_item, duckdb::LogicalType logical_type);
-duckdb::Value ConvertPyBindObjectToDuckDBValue(py::object py_item, duckdb::LogicalType logical_type);
+duckdb::Value ConvertPyBindObjectToDuckDBValue(py::handle py_item, duckdb::LogicalType logical_type);
 void ConvertPyBindObjectsToDuckDBValues(py::iterator pyiter, std::vector<duckdb::LogicalType> logical_types,
                                         std::vector<duckdb::Value> &result);
 duckdb::LogicalType PyTypeToDuckDBLogicalType(py::object pyType);
