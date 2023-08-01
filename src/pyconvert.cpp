@@ -209,7 +209,7 @@ void ConvertPyBindObjectsToDuckDBValues(py::iterator it, std::vector<duckdb::Log
 }
 
 duckdb::LogicalType PyTypeToDuckDBLogicalType(py::object pyType) {
-	if(!py::isinstance<py::type>(pyType)) {
+	if (!py::isinstance<py::type>(pyType)) {
 		debug("Trying to convert a python object that is not a Type into a duckdb type, returning invalid");
 		return duckdb::LogicalType::INVALID;
 	} else {
