@@ -87,7 +87,7 @@ duckdb::Value ConvertPyBindObjectToDuckDBValue(py::handle py_item, duckdb::Logic
 	case duckdb::LogicalTypeId::TINYINT:
 	case duckdb::LogicalTypeId::SMALLINT:
 	case duckdb::LogicalTypeId::INTEGER:
-		if(py::isinstance<py::int_>(py_item)) {
+		if (py::isinstance<py::int_>(py_item)) {
 			value = duckdb::Value(py_item.cast<int32_t>());
 		} else {
 			conversion_failed = true;
@@ -95,14 +95,14 @@ duckdb::Value ConvertPyBindObjectToDuckDBValue(py::handle py_item, duckdb::Logic
 		break;
 	case duckdb::LogicalTypeId::FLOAT:
 	case duckdb::LogicalTypeId::DOUBLE:
-		if(py::isinstance<py::float_>(py_item)) {
+		if (py::isinstance<py::float_>(py_item)) {
 			value = duckdb::Value(py_item.cast<float>());
 		} else {
 			conversion_failed = true;
 		}
 		break;
 	case duckdb::LogicalTypeId::VARCHAR:
-		if(py::isinstance<py::str>(py_item)) {
+		if (py::isinstance<py::str>(py_item)) {
 			value = duckdb::Value(py_item.cast<std::string>());
 		} else {
 			conversion_failed = true;
