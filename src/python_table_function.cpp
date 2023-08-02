@@ -34,10 +34,16 @@ void PythonTableFunction::init() {
 
 	// Wrap the function in our Python decorator
 	py::object decorator = mod.attr("DuckTableSchemaWrapper");
-	py::tuple args = py::make_tuple(functionObj);
-	py::function wrapped = decorator(*args);
-	debug("Seems like I wrapped the new object?");
-	functionObj = wrapped;
+	if(py::isinstance((py::object)functionObj, decorator)) {
+		debug("Function already wrapped in the decorator");
+		return;
+	} else {
+		debug("Function si not wrapped. Wrapping in hopes it has type annotations");
+		py::tuple args = py::make_tuple(functionObj);
+		py::function wrapped = decorator(*args);
+		debug("Seems like I wrapped the new object?");
+		functionObj = wrapped;
+	}
 }
 
 std::vector<std::string> PythonTableFunction::column_names(py::tuple args, py::dict kwargs) {
@@ -58,11 +64,13 @@ std::vector<duckdb::LogicalType> PythonTableFunction::column_types(py::tuple arg
 	std::vector<duckdb::LogicalType> result;
 	std::vector<py::object> pytypes;
 	if (!py::hasattr(functionObj, "column_types")) {
+		debug("No 'column_types' attribute on the python function. Is ducktables installed?");
 		return result;
 	} else {
 		py::object method = functionObj.attr("column_types");
 		py::object retVal = method(*args, **kwargs);
 		if (retVal.is_none()) {
+			debug("The 'column_types' function returned a None value. Is everything ok?");
 			return result;
 		}
 		py::list pyColTypes = retVal.cast<py::list>();
