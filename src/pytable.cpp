@@ -50,6 +50,7 @@ void FinalizePyTable(PyScanBindData &bind_data) {
 }
 
 void PyScan(ClientContext &context, TableFunctionInput &data, DataChunk &output) {
+	py::gil_scoped_acquire();
 	auto &bind_data = (PyScanBindData &)*data.bind_data;
 
 	auto &local_state = (PyScanLocalState &)*data.local_state;
@@ -215,6 +216,7 @@ void PyBindColumnsAndTypes(ClientContext &context, TableFunctionBindInput &input
 
 unique_ptr<FunctionData> PyBind(ClientContext &context, TableFunctionBindInput &input,
                                 std::vector<LogicalType> &return_types, std::vector<std::string> &names) {
+	py::gil_scoped_acquire();
 	auto result = make_uniq<PyScanBindData>();
 	PyBindFunctionAndArgs(context, input, result);
 	PyBindColumnsAndTypes(context, input, result, return_types, names);
