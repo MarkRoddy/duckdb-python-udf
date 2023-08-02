@@ -34,7 +34,7 @@ void PythonTableFunction::init() {
 
 	// Wrap the function in our Python decorator
 	py::object decorator = mod.attr("DuckTableSchemaWrapper");
-	if(py::isinstance((py::object)functionObj, decorator)) {
+	if (py::isinstance((py::object)functionObj, decorator)) {
 		debug("Function already wrapped in the decorator");
 		return;
 	} else {

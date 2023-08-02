@@ -164,7 +164,8 @@ void PyBindColumnsAndTypes(ClientContext &context, TableFunctionBindInput &input
 		auto types = bind_data->pyfunc->column_types(bind_data->objArguments, bind_data->objKwargs);
 		if (types.empty()) {
 			// todo: Add a URL to an article on writing Python functions once said article exists
-			auto errMsg = "A 'columns' argument is required when invoking a Python function that does not have type annotations";
+			auto errMsg =
+			    "A 'columns' argument is required when invoking a Python function that does not have type annotations";
 			throw InvalidInputException(errMsg);
 		}
 		for (auto t : types) {
