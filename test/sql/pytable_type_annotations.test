@@ -27,11 +27,11 @@ SELECT columnA, columnB FROM pytable('udfs:index_chars_missing_columns_type_anno
 statement error
 SELECT columnA, columnB FROM pytable('udfs:index_chars_missing_columns_type_annotation', 'foo')
 ----
-Invalid Input Error: You did not specify a 'columns' argument, and your Python function does not have type annotations (or they are incompatible)
+Invalid Input Error: A 'columns' argument is required when invoking a Python function that does not have type annotations
 
 # Error when type type annotations is missing a row type (which implicitly means it's missing column types too).
 statement error
 SELECT columnA, columnB FROM pytable('udfs:index_chars_missing_row_type_annotation', 'foo')
 ----
-Invalid Input Error: You did not specify a 'columns' argument, and your Python function does not have type annotations (or they are incompatible)
+Invalid Input Error: A 'columns' argument is required when invoking a Python function that does not have type annotations
 

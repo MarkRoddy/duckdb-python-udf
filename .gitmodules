@@ -2,3 +2,7 @@
 	path = duckdb
 	url = https://github.com/duckdb/duckdb
 	branch = master
+[submodule "pybind11"]
+	path = pybind11
+	url = git@github.com:pybind/pybind11.git
+	branch = stable

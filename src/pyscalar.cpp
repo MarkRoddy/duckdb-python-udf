@@ -2,7 +2,6 @@
 #include "duckdb/common/string_util.hpp"
 #include "duckdb/function/scalar_function.hpp"
 #include <duckdb/parser/parsed_data/create_scalar_function_info.hpp>
-#include <Python.h>
 #include <string>
 #include <iostream>
 #include "python_function.hpp"
@@ -28,22 +27,19 @@ static void PyScalarFunction(DataChunk &args, ExpressionState &state, Vector &re
 			auto value = column.GetValue(row);
 			duck_args.emplace_back(value);
 		}
-		auto pyargs = duckdbs_to_pys(duck_args);
+		py::tuple pyargs = duckdbs_to_pyobjs(duck_args);
 
-		PyObject *pyresult;
-		PythonException *error;
-		std::tie(pyresult, error) = func.call(pyargs);
-		if (!pyresult) {
-			Py_DECREF(pyargs);
-			std::string err = error->message;
-			error->~PythonException();
-			throw std::runtime_error(err);
-		} else {
-			auto ddb_result = ConvertPyObjectToDuckDBValue(pyresult, duckdb::LogicalTypeId::VARCHAR);
-			result.SetValue(row, ddb_result);
-			Py_DECREF(pyargs);
-			Py_DECREF(pyresult);
+		py::object pyresult;
+		try {
+			pyresult = func.call(pyargs);
+		} catch (py::error_already_set &e) {
+			e.restore();
+			PyErr_Clear();
+			std::string msg = py::cast<std::string>(py::str(e.value()));
+			throw std::runtime_error(msg);
 		}
+		auto ddb_result = ConvertPyBindObjectToDuckDBValue(pyresult, duckdb::LogicalTypeId::VARCHAR);
+		result.SetValue(row, ddb_result);
 	}
 }
 
