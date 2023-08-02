@@ -67,7 +67,6 @@ jobs:
         shell: bash
         run: |
           make release
-          make test
           ccache -s
 
       - name: Cache build artifacts
@@ -79,6 +78,11 @@ jobs:
             ~/.ccache/
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
+      - name: Run Tests
+        shell: bash
+        run: |
+          make test
+          
       - name: Deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.S3_DEPLOY_ID }}
