@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         # Add commits/tags to build against other DuckDB versions
-        duckdb_version: ['0.8.0', '0.8.1'] # <submodule_version>"
+        duckdb_version: ['0.8.0', '0.8.1', '0.10.1'] # <submodule_version>"
         python_version: ['3.8', '3.9', '3.10', '3.11']
         # arch: ['linux_amd64', 'linux_arm64', 'linux_amd64_gcc4']
         arch: ['linux_amd64']
